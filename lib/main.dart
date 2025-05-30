@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'home.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
+import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(const Login());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
 
+
+class Login extends StatelessWidget {
+  const Login({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -42,52 +46,55 @@ class MyApp extends StatelessWidget {
       ),
 
       appBarTheme: AppBarTheme(
-        color: Colors.red,
-        centerTitle: true,
-        foregroundColor: Colors.white
+          color: Colors.red,
+          centerTitle: true,
+          foregroundColor: Colors.white
 
       ),
     );
+    final providers = [EmailAuthProvider()];
+
+    void onSignedIn() {
+      //Navigator.pushReplacementNamed(context, '/profile');
+      Navigator.pushReplacementNamed(context, '/home');
+
+    }
 
     return MaterialApp(
-      title: 'Esentepe Brisk',
       debugShowCheckedModeBanner: false,
-
+      initialRoute: FirebaseAuth.instance.currentUser == null ? '/sign-in' : '/profile',
       theme: appTheme,
-      home: const MyHomePage(title: 'Esentepe Brisk'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text('A Text', style: Theme.of(context).textTheme.headlineMedium),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: null,
-        child: const Icon(Icons.add),
-      ),
+      routes: {
+        '/sign-in': (context) {
+          return Scaffold(
+            appBar: AppBar(title: Text('Brisk Login / Signup'),),
+            body: SignInScreen(
+              providers: providers,
+              actions: [
+                AuthStateChangeAction<UserCreated>((context, state) {
+                  // Put any new user logic here
+                  Navigator.pushReplacementNamed(context, '/sign-in');                }),
+                AuthStateChangeAction<SignedIn>((context, state) {
+                  onSignedIn();
+                }),
+              ],
+            ),
+          );
+        },
+        '/profile': (context) {
+          return ProfileScreen(
+            providers: providers,
+            actions: [
+              SignedOutAction((context) {
+                Navigator.pushReplacementNamed(context, '/sign-in');
+              }),
+            ],
+          );
+        },
+        '/home': (context) {
+          return const Home();
+        },
+      },
     );
   }
 }

@@ -1,4 +1,4 @@
-name: esentepebrisk
+name: Brisk_Auto_Rent_A_Car_And_Garage
 description: "Brisk_Auto_Rent_A_Car_And_Garage"
 publish_to: 'none'
 version: 1.0.0+1
@@ -23,3 +23,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 flutter:
   uses-material-design: true
+
+fonts:
+  - family: SocialIcons
+    fonts:
+      - asset: packages/firebase_ui_auth/fonts/SocialIcons.ttf

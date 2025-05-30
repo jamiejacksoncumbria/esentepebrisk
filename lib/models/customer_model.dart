@@ -1,6 +1,3 @@
-import 'dart:ffi';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CustomerModel {
   String? customerUUID;
@@ -9,8 +6,9 @@ class CustomerModel {
   String? phoneNumber;
   String? phoneNumber2;
   String? email;
+  List<String>? searchTerms;
 
   CustomerModel({required this.customerUUID, required this.firstName, required this.surName,
-    required this.phoneNumber, this.phoneNumber2, this.email});
+    required this.phoneNumber, this.phoneNumber2, this.email,required this.searchTerms});
 
 }
