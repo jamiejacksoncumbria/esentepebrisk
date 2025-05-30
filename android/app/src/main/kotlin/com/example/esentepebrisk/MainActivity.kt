@@ -1,4 +1,4 @@
-package com.example.esentepebrisk
+package uk.co.gopcpitstop.esentepebrisk
 
 import io.flutter.embedding.android.FlutterActivity
 
