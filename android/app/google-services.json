@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "959391171995",
+    "project_id": "esentepebrisk",
+    "storage_bucket": "esentepebrisk.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:959391171995:android:f9593d16ced5eea9168d3e",
+        "android_client_info": {
+          "package_name": "uk.co.gopcpitstop.esentepebrisk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqkIx4uSisM3_HTuKL5P4t8Bt74K7I4TU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
