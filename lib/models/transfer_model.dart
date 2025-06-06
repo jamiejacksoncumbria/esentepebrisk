@@ -33,8 +33,8 @@ class TransferModel {
     required this.cost,
     required this.driver,
     required this.driverUUID,
-    this.pickupLocationGeoPoint,
-    this.dropOffLocationGeoPoint,
+    required this.pickupLocationGeoPoint,
+    required this.dropOffLocationGeoPoint,
   });
 
   TransferModel.noneAirport({
@@ -54,4 +54,45 @@ class TransferModel {
     this.pickupLocationGeoPoint,
     this.dropOffLocationGeoPoint,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'collectionUUID': collectionUUID,
+      'customerUUID': customerUUID,
+      'collectionDateAndTime': collectionDateAndTime,
+      'flightDateAndTime': flightDateAndTime,
+      'collectionDateAndTimeString': collectionDateAndTimeString,
+      'flightDateAndTimeString': flightDateAndTimeString,
+      'pickupLocation': pickupLocation,
+      'dropOffLocation': dropOffLocation,
+      'airportCollection': airportCollection,
+      'amountOfPeople': amountOfPeople,
+      'cost': cost,
+      'driver': driver,
+      'driverUUID': driverUUID,
+      'pickupLocationGeoPoint': pickupLocationGeoPoint,
+      'dropOffLocationGeoPoint': dropOffLocationGeoPoint,
+    };
+  }
+
+  factory TransferModel.fromMap(Map<String, dynamic> map) {
+    return TransferModel.airport(
+      collectionUUID: map['collectionUUID'] as String,
+      customerUUID: map['customerUUID'] as String,
+      collectionDateAndTime: map['collectionDateAndTime'] as Timestamp,
+      flightDateAndTime: map['flightDateAndTime'] as Timestamp,
+      collectionDateAndTimeString: map['collectionDateAndTimeString'] as String,
+      flightDateAndTimeString: map['flightDateAndTimeString'] as String,
+      pickupLocation: map['pickupLocation'] as String,
+      dropOffLocation: map['dropOffLocation'] as String,
+      airportCollection: map['airportCollection'] as Bool,
+      amountOfPeople: map['amountOfPeople'] as String,
+      cost: map['cost'] as String,
+      driver: map['driver'] as String,
+      driverUUID: map['driverUUID'] as String,
+      pickupLocationGeoPoint: map['pickupLocationGeoPoint'] as GeoPoint,
+      dropOffLocationGeoPoint: map['dropOffLocationGeoPoint'] as GeoPoint,
+
+    );
+  }
 }

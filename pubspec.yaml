@@ -14,8 +14,14 @@ dependencies:
   firebase_ui_firestore: ^1.7.1
   cloud_firestore: ^5.6.8
   firebase_storage: ^12.4.6
+  image_picker: ^0.8.6
+  geolocator: ^9.0.2
+  google_maps_flutter: ^2.2.0
+  intl: ^0.20.2
   firebase_ui_storage: ^2.1.1
   firebase_core: ^3.13.1
+  flutter_riverpod: ^2.6.1
+  photo_view: ^0.14.0
 
 dev_dependencies:
   flutter_test:

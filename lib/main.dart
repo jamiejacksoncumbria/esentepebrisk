@@ -1,7 +1,11 @@
+import 'package:Brisk_Auto_Rent_A_Car_And_Garage/screens/customer_search_screen.dart';
+import 'package:Brisk_Auto_Rent_A_Car_And_Garage/transfers_screens/accommodation_to_airport.dart';
+import 'package:Brisk_Auto_Rent_A_Car_And_Garage/transfers_screens/airport_to_accommodation.dart';
+import 'package:Brisk_Auto_Rent_A_Car_And_Garage/transfers_screens/other_transfer.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'home.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'firebase_options/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 
@@ -10,10 +14,8 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const Login());
+  runApp(ProviderScope(child: const Login()));
 }
-
-
 
 class Login extends StatelessWidget {
   const Login({super.key});
@@ -21,61 +23,56 @@ class Login extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData appTheme = ThemeData(
-      // Define the primary color
       primaryColor: Colors.red,
-
-      // Define the accent color (now called colorScheme.secondary)
       colorScheme: ColorScheme.fromSwatch(
         primarySwatch: Colors.red,
       ).copyWith(
         secondary: Colors.redAccent,
       ),
-
-      // Define the brightness (light or dark)
       brightness: Brightness.light,
-
-      // Define other theme properties as needed
-      // For example, button theme, text theme, etc.
-      buttonTheme: ButtonThemeData(
+      buttonTheme: const ButtonThemeData(
         buttonColor: Colors.red,
-        textTheme: ButtonTextTheme.primary,
+        textTheme: ButtonTextTheme.accent,
+        disabledColor: Colors.black38,
       ),
-
-      textTheme: TextTheme(
-        headlineLarge: TextStyle(color: Colors.white), // Example for AppBar title
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(color: Colors.white),
       ),
-
-      appBarTheme: AppBarTheme(
-          color: Colors.red,
-          centerTitle: true,
-          foregroundColor: Colors.white
-
+      appBarTheme: const AppBarTheme(
+        color: Colors.red,
+        centerTitle: true,
+        foregroundColor: Colors.white,
       ),
     );
+
     final providers = [EmailAuthProvider()];
 
-    void onSignedIn() {
-      //Navigator.pushReplacementNamed(context, '/profile');
-      Navigator.pushReplacementNamed(context, '/home');
-
+    void onSignedIn(BuildContext context) {
+      Navigator.of(context, rootNavigator: true).pushReplacementNamed('/customer_form');
     }
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: FirebaseAuth.instance.currentUser == null ? '/sign-in' : '/profile',
       theme: appTheme,
+      initialRoute:
+      FirebaseAuth.instance.currentUser == null ? '/sign-in' : '/customer_form',
       routes: {
         '/sign-in': (context) {
           return Scaffold(
-            appBar: AppBar(title: Text('Brisk Login / Signup'),),
+            appBar: AppBar(title: const Text('Brisk Login / Signup')),
             body: SignInScreen(
               providers: providers,
               actions: [
                 AuthStateChangeAction<UserCreated>((context, state) {
-                  // Put any new user logic here
-                  Navigator.pushReplacementNamed(context, '/sign-in');                }),
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.of(context, rootNavigator: true)
+                        .pushReplacementNamed('/sign-in');
+                  });
+                }),
                 AuthStateChangeAction<SignedIn>((context, state) {
-                  onSignedIn();
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    onSignedIn(context);
+                  });
                 }),
               ],
             ),
@@ -83,17 +80,22 @@ class Login extends StatelessWidget {
         },
         '/profile': (context) {
           return ProfileScreen(
+            appBar: AppBar(title: Text('Brisk [Edit your profile]'),),
             providers: providers,
             actions: [
               SignedOutAction((context) {
-                Navigator.pushReplacementNamed(context, '/sign-in');
+                Navigator.of(context, rootNavigator: true)
+                    .pushReplacementNamed('/sign-in');
               }),
             ],
           );
         },
-        '/home': (context) {
-          return const Home();
-        },
+        //'/home': (context) => const Home(),
+        '/other_transfer': (context) => const OtherTransfersScreenScreen(),
+        '/airport_to_accommodation': (context) => const AirportToAccommodationScreen(),
+        '/accommodation_to_airport': (context) => const AccommodationToAirportScreen(),
+        '/customer_form': (context) => const CustomerSearchScreen(),
+
       },
     );
   }
