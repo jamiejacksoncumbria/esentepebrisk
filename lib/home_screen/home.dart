@@ -48,8 +48,7 @@ void _showTransferDialog(BuildContext context) {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/customer_form');
-                //Navigator.pushNamed(context, '/airport_to_accommodation');
+                Navigator.pushNamed(context, '/airport_to_accommodation');
               },
               child: Text('Airport to Accommodation'),
             ),

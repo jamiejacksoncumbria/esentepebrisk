@@ -1,3 +1,4 @@
+import 'package:Brisk_Auto_Rent_A_Car_And_Garage/screens/customer_form_screen.dart';
 import 'package:Brisk_Auto_Rent_A_Car_And_Garage/screens/customer_search_screen.dart';
 import 'package:Brisk_Auto_Rent_A_Car_And_Garage/transfers_screens/accommodation_to_airport.dart';
 import 'package:Brisk_Auto_Rent_A_Car_And_Garage/transfers_screens/airport_to_accommodation.dart';

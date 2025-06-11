@@ -282,7 +282,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       }
 
       if (widget.onSave != null) widget.onSave!();
-      if (mounted) Navigator.pop(context);
+      if(mounted){Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)=>CustomerSearchScreen(searchTerm: '${_firstNameController.text} ${_lastNameController.text}',)));}
+
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -291,9 +292,6 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
-    }
-    if (mounted) {
-      Navigator.of(context).pushReplacementNamed('/customer_form');
     }
   }
 
@@ -309,11 +307,13 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     }
 
     addTerms(_firstNameController.text);
+    addTerms('${_firstNameController.text}${_lastNameController.text}');
+    addTerms('${_firstNameController.text} ${_lastNameController.text}');
     addTerms(_lastNameController.text);
     addTerms(_phoneController.text);
     if (_phone2Controller.text.isNotEmpty) addTerms(_phone2Controller.text);
     if (_emailController.text.isNotEmpty) {
-      addTerms(_emailController.text.split('@').first);
+      addTerms(_emailController.text);
     }
     if (_addressController.text.isNotEmpty) {
       _addressController.text.split(' ').forEach(addTerms);
