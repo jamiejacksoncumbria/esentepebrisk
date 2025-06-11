@@ -9,8 +9,8 @@ class CustomerModel {
   final String? email;
   final String? address;
   final GeoPoint? location;
-   String? passportPhotoUrl;
-   String? licensePhotoUrl;
+  String? passportPhotoUrl;
+  String? licensePhotoUrl;
   final List<String> searchTerms;
   final Timestamp createdAt;
 

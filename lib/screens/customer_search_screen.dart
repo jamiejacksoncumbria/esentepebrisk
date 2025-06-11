@@ -3,11 +3,11 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../models/customer_model.dart';
 import '../repositories/customer_repository.dart';
-import '../utils/customer_utils.dart';
-import 'customer_form_screen.dart';
-
+import '../screens/customer_form_screen.dart';
+import '../screens/customer_notes_screen.dart';
 
 final customerRepositoryProvider = Provider((ref) => CustomerRepository());
 
@@ -79,10 +79,18 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirm Delete'),
-        content: const Text('Are you sure you want to delete this customer and all their photos?'),
+        content: const Text(
+          'Are you sure you want to delete this customer and all their photos?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
@@ -105,44 +113,38 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
   }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
-    final cleaned = sanitizePhoneNumber(phoneNumber);
-    final url = Uri.parse('tel:$cleaned');
+    final url = Uri.parse('tel:$phoneNumber');
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not launch phone app')),
-        );
-      }
+      _showError('Could not launch phone app');
     }
   }
 
   Future<void> _sendSms(String phoneNumber) async {
-    final cleaned = sanitizePhoneNumber(phoneNumber);
-    final url = Uri.parse('sms:$cleaned');
+    final url = Uri.parse('sms:$phoneNumber');
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not launch messaging app')),
-        );
-      }
+      _showError('Could not launch messaging app');
     }
   }
 
   Future<void> _openWhatsApp(String phoneNumber) async {
-    final cleaned = sanitizePhoneNumber(phoneNumber).replaceAll('+', '');
-    final url = Uri.parse('https://wa.me/$cleaned');
+    final cleaned = phoneNumber.replaceAll(RegExp(r'[^0-9+]'), '');
+    final url = Uri.parse('https://wa.me/${cleaned.replaceAll('+', '')}');
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not launch WhatsApp')),
-        );
-      }
+      _showError('Could not launch WhatsApp');
+    }
+  }
+
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     }
   }
 
@@ -151,48 +153,43 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
     required String label,
     required VoidCallback onPressed,
     Color? color,
-    Color? textColor = Colors.white,
   }) {
     return ElevatedButton.icon(
-      icon: Icon(icon, size: 16, color: textColor),
-      label: Text(label, style: TextStyle(color: textColor)),
+      icon: Icon(icon, size: 16, color: Colors.white),
+      label: Text(label, style: const TextStyle(color: Colors.white)),
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         textStyle: const TextStyle(fontSize: 12),
-        backgroundColor: color,
-        foregroundColor: textColor,
+        backgroundColor: color ?? Colors.grey,
       ),
     );
   }
 
-  Widget _buildPhoneActions(String phoneNumber) {
+  Widget _buildPhoneActions(CustomerModel customer) {
     final List<Widget> buttons = [];
 
-    buttons.add(
+    buttons.addAll([
       _buildActionButton(
         icon: Icons.chat,
         label: 'WhatsApp Msg',
-        onPressed: () => _openWhatsApp(phoneNumber),
+        onPressed: () => _openWhatsApp(customer.phone),
         color: Colors.green[700],
       ),
-    );
-
-    buttons.add(
       _buildActionButton(
         icon: Icons.phone,
         label: 'WhatsApp Call',
-        onPressed: () => _openWhatsApp(phoneNumber),
+        onPressed: () => _openWhatsApp(customer.phone),
         color: Colors.green[900],
       ),
-    );
+    ]);
 
-    if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
+    if (kIsWeb || (!kIsWeb && (Platform.isAndroid || Platform.isIOS))) {
       buttons.add(
         _buildActionButton(
           icon: Icons.call,
           label: 'Call',
-          onPressed: () => _makePhoneCall(phoneNumber),
+          onPressed: () => _makePhoneCall(customer.phone),
           color: Colors.green,
         ),
       );
@@ -203,61 +200,35 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
         _buildActionButton(
           icon: Icons.message,
           label: 'SMS',
-          onPressed: () => _sendSms(phoneNumber),
+          onPressed: () => _sendSms(customer.phone),
           color: Colors.blue,
         ),
       );
     }
 
+    buttons.add(
+      _buildActionButton(
+        icon: Icons.notes,
+        label: 'Notes',
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CustomerNotesScreen(
+                customerId: customer.id,
+                repository: ref.read(customerRepositoryProvider),
+              ),
+            ),
+          );
+        },
+        color: Colors.deepPurple,
+      ),
+    );
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: buttons,
-    );
-  }
-
-  Widget _buildTransferButtons(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 800;
-        return isWide ? _buildButtonRow() : _buildButtonColumn();
-      },
-    );
-  }
-
-  Widget _buildButtonRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: _buildButtons(),
-    );
-  }
-
-  Widget _buildButtonColumn() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: _buildButtons(),
-    );
-  }
-
-  List<Widget> _buildButtons() {
-    return [
-      _buildTransferButton('Airport to Accommodation', '/airport_to_accommodation'),
-      const SizedBox(height: 8, width: 8),
-      _buildTransferButton('Accommodation to Airport', '/airport_to_accommodation'),
-      const SizedBox(height: 8, width: 8),
-      _buildTransferButton('Other Transfers', '/other_transfer'),
-      const SizedBox(height: 8, width: 8),
-      _buildTransferButton('Add Car Video', '/other_transfer'),
-    ];
-  }
-
-  Widget _buildTransferButton(String text, String route) {
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.pop(context);
-        Navigator.pushNamed(context, route);
-      },
-      child: Text(text),
     );
   }
 
@@ -268,11 +239,11 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
         title: const Text('Customer Search'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.account_circle),
             onPressed: () {
               Navigator.of(context).pushNamed('/profile');
             },
-            icon: const Icon(Icons.account_circle),
-          ),
+          )
         ],
       ),
       body: Column(
@@ -302,9 +273,7 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                 : _showForm
                 ? CustomerFormScreen(onSave: _searchCustomers)
                 : _searchResults.isEmpty
-                ? const Center(
-              child: Text('No customers found. Type to search or click + to add.'),
-            )
+                ? const Center(child: Text('No customers found.'))
                 : ListView.builder(
               itemCount: _searchResults.length,
               itemBuilder: (context, index) {
@@ -312,25 +281,30 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                 return GestureDetector(
                   onLongPress: () => _deleteCustomer(customer.id),
                   child: Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 4),
                     child: ListTile(
-                      title: Text('${customer.firstName} ${customer.lastName}'),
+                      title: Text(
+                          '${customer.firstName} ${customer.lastName}'),
                       subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
                         children: [
                           Text(customer.phone),
-                          _buildPhoneActions(customer.phone),
+                          _buildPhoneActions(customer),
                           if (customer.secondaryPhone != null) ...[
                             const SizedBox(height: 8),
                             Text('Secondary: ${customer.secondaryPhone}'),
-                            _buildPhoneActions(customer.secondaryPhone!),
+                            _buildPhoneActions(
+                              customer.copyWith(
+                                phone: customer.secondaryPhone!,
+                              ),
+                            ),
                           ],
-                          if (customer.email != null) Text(customer.email!),
-                          if (customer.address != null) Text(customer.address!),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: _buildTransferButtons(context),
-                          ),
+                          if (customer.email != null)
+                            Text(customer.email!),
+                          if (customer.address != null)
+                            Text(customer.address!),
                         ],
                       ),
                       trailing: IconButton(

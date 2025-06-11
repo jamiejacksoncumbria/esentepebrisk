@@ -120,15 +120,15 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
         ),
         child: hasPhoto
             ? currentPhoto != null
-                  ? Image.file(File(currentPhoto.path), fit: BoxFit.cover)
-                  : Image.network(url!, fit: BoxFit.cover)
+            ? Image.file(File(currentPhoto.path), fit: BoxFit.cover)
+            : Image.network(url!, fit: BoxFit.cover)
             : const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_a_photo, size: 40),
-                  Text('Add Photo', style: TextStyle(fontSize: 12)),
-                ],
-              ),
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_a_photo, size: 40),
+            Text('Add Photo', style: TextStyle(fontSize: 12)),
+          ],
+        ),
       ),
     );
   }
@@ -220,20 +220,20 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       final repo = ref.read(customerRepositoryProvider);
       var customer =
           widget.customer ??
-          CustomerModel(
-            id: '',
-            firstName: '',
-            lastName: '',
-            phone: '',
-            secondaryPhone: null,
-            email: null,
-            address: null,
-            location: null,
-            passportPhotoUrl: null,
-            licensePhotoUrl: null,
-            searchTerms: [],
-            createdAt: Timestamp.now(),
-          );
+              CustomerModel(
+                id: '',
+                firstName: '',
+                lastName: '',
+                phone: '',
+                secondaryPhone: null,
+                email: null,
+                address: null,
+                location: null,
+                passportPhotoUrl: null,
+                licensePhotoUrl: null,
+                searchTerms: [],
+                createdAt: Timestamp.now(),
+              );
 
       // Update customer data
       customer = customer.copyWith(
@@ -331,156 +331,156 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _firstNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'First Name*',
-                      ),
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
-                    ),
-                    TextFormField(
-                      controller: _lastNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Last Name*',
-                      ),
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
-                    ),
-                    TextFormField(
-                      controller: _phoneController,
-                      decoration: const InputDecoration(
-                        labelText: 'Phone*',
-                        prefixText: '+',
-                      ),
-                      keyboardType: TextInputType.phone,
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
-                    ),
-                    TextFormField(
-                      controller: _phone2Controller,
-                      decoration: const InputDecoration(
-                        labelText: 'Secondary Phone',
-                        prefixText: '+',
-                      ),
-                      keyboardType: TextInputType.phone,
-                    ),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(labelText: 'Email'),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    TextFormField(
-                      controller: _addressController,
-                      decoration: const InputDecoration(labelText: 'Address'),
-                      maxLines: 2,
-                    ),
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _firstNameController,
+                decoration: const InputDecoration(
+                  labelText: 'First Name*',
+                ),
+                validator: (v) => v!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _lastNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Last Name*',
+                ),
+                validator: (v) => v!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Phone*',
+                  prefixText: '+',
+                ),
+                keyboardType: TextInputType.phone,
+                validator: (v) => v!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _phone2Controller,
+                decoration: const InputDecoration(
+                  labelText: 'Secondary Phone',
+                  prefixText: '+',
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: 'Email'),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              TextFormField(
+                controller: _addressController,
+                decoration: const InputDecoration(labelText: 'Address'),
+                maxLines: 2,
+              ),
 
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Identification Photos',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Column(
-                          children: [
-                            const Text('Passport Photo'),
-                            const SizedBox(height: 8),
-                            _buildPhotoWidget(
-                              widget.customer?.passportPhotoUrl,
-                              true,
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            const Text('Driving License'),
-                            const SizedBox(height: 8),
-                            _buildPhotoWidget(
-                              widget.customer?.licensePhotoUrl,
-                              false,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Location',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _latController,
-                            decoration: const InputDecoration(
-                              labelText: 'Latitude',
-                              prefixIcon: Icon(Icons.location_on),
-                            ),
-                            keyboardType: TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            onChanged: (_) => _updateLocationFromText(),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _lngController,
-                            decoration: const InputDecoration(
-                              labelText: 'Longitude',
-                              prefixIcon: Icon(Icons.location_on),
-                            ),
-                            keyboardType: TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            onChanged: (_) => _updateLocationFromText(),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: _getCurrentLocation,
-                      child: const Text('Get Current Location'),
-                    ),
-                    if (_currentPosition != null ||
-                        widget.customer?.location != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          'Current: ${_currentPosition?.latitude.toStringAsFixed(6) ?? widget.customer?.location?.latitude.toStringAsFixed(6)}, '
-                          '${_currentPosition?.longitude.toStringAsFixed(6) ?? widget.customer?.location?.longitude.toStringAsFixed(6)}',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
-                      child: const Text('Save Customer'),
-                    ),
-                  ],
+              const SizedBox(height: 16),
+              const Text(
+                'Identification Photos',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Column(
+                    children: [
+                      const Text('Passport Photo'),
+                      const SizedBox(height: 8),
+                      _buildPhotoWidget(
+                        widget.customer?.passportPhotoUrl,
+                        true,
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      const Text('Driving License'),
+                      const SizedBox(height: 8),
+                      _buildPhotoWidget(
+                        widget.customer?.licensePhotoUrl,
+                        false,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+              const Text(
+                'Location',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _latController,
+                      decoration: const InputDecoration(
+                        labelText: 'Latitude',
+                        prefixIcon: Icon(Icons.location_on),
+                      ),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      onChanged: (_) => _updateLocationFromText(),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _lngController,
+                      decoration: const InputDecoration(
+                        labelText: 'Longitude',
+                        prefixIcon: Icon(Icons.location_on),
+                      ),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      onChanged: (_) => _updateLocationFromText(),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: _getCurrentLocation,
+                child: const Text('Get Current Location'),
+              ),
+              if (_currentPosition != null ||
+                  widget.customer?.location != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Current: ${_currentPosition?.latitude.toStringAsFixed(6) ?? widget.customer?.location?.latitude.toStringAsFixed(6)}, '
+                        '${_currentPosition?.longitude.toStringAsFixed(6) ?? widget.customer?.location?.longitude.toStringAsFixed(6)}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _submitForm,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: const Text('Save Customer'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
