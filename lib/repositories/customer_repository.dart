@@ -10,17 +10,29 @@ class CustomerRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
+  // Search and include latest note snippet per customer
   Future<List<CustomerModel>> searchCustomers(String query) async {
-    try {
-      if (query.isEmpty) return [];
+    if (query.isEmpty) return [];
 
+    try {
       final snapshot = await _firestore
           .collection('customers')
           .where('searchTerms', arrayContains: query.toLowerCase())
+          .orderBy('createdAt', descending: true)
           .limit(15)
           .get();
 
-      return snapshot.docs.map((doc) => CustomerModel.fromMap(doc.data())).toList();
+      final list = <CustomerModel>[];
+
+      for (final doc in snapshot.docs) {
+        final customer = CustomerModel.fromMap(doc.data());
+        final notes = await getNotes(customer.id);
+        final snippet = notes.isNotEmpty ? notes.first.text : null;
+
+        list.add(customer.copyWith(latestNoteSnippet: snippet));
+      }
+
+      return list;
     } catch (e) {
       debugPrint('Search error: $e');
       rethrow;
@@ -28,43 +40,31 @@ class CustomerRepository {
   }
 
   Future<String> createCustomer(CustomerModel customer) async {
-    try {
-      final docRef = _firestore.collection('customers').doc();
-      final customerWithId = customer.copyWith(id: docRef.id);
-      await docRef.set(customerWithId.toMap());
-      return docRef.id;
-    } catch (e) {
-      debugPrint('Create error: $e');
-      rethrow;
-    }
+    final doc = _firestore.collection('customers').doc();
+    final withId = customer.copyWith(id: doc.id);
+    await doc.set(withId.toMap());
+    return doc.id;
   }
 
   Future<void> updateCustomer(CustomerModel customer) async {
-    try {
-      await _firestore.collection('customers').doc(customer.id).update(customer.toMap());
-    } catch (e) {
-      debugPrint('Update error: $e');
-      rethrow;
-    }
+    await _firestore
+        .collection('customers')
+        .doc(customer.id)
+        .update(customer.toMap());
   }
 
   Future<void> deleteCustomer(String id) async {
-    try {
-      await _deleteCustomerPhotos(id);
-      await _firestore.collection('customers').doc(id).delete();
-    } catch (e) {
-      debugPrint('Delete error: $e');
-      rethrow;
-    }
+    await _deletePhotos(id);
+    await _firestore.collection('customers').doc(id).delete();
   }
 
-  Future<void> _deleteCustomerPhotos(String customerId) async {
+  Future<void> _deletePhotos(String customerId) async {
     try {
       final ref = _storage.ref().child('customers/$customerId');
-      final listResult = await ref.listAll();
-      await Future.wait(listResult.items.map((item) => item.delete()));
-    } catch (e) {
-      debugPrint('Photo delete error: $e');
+      final all = await ref.listAll();
+      await Future.wait(all.items.map((i) => i.delete()));
+    } catch (_) {
+      debugPrint('Photo delete failed');
     }
   }
 
@@ -73,87 +73,54 @@ class CustomerRepository {
     required XFile file,
     required String type,
   }) async {
-    try {
-      final ref = _storage.ref().child(
-          'customers/$customerId/$type-${DateTime.now().millisecondsSinceEpoch}.jpg');
-
-      final uploadTask = ref.putData(await file.readAsBytes());
-      final snapshot = await uploadTask;
-
-      if (snapshot.state == TaskState.success) {
-        return await ref.getDownloadURL();
-      }
-      return null;
-    } catch (e) {
-      debugPrint('Upload error: $e');
-      return null;
-    }
+    final ref = _storage
+        .ref()
+        .child('customers/$customerId/$type-${DateTime.now().millisecondsSinceEpoch}.jpg');
+    final task = ref.putData(await file.readAsBytes());
+    final snap = await task;
+    return (snap.state == TaskState.success) ? await ref.getDownloadURL() : null;
   }
 
-  // ----------------- Notes Support ------------------
-
+  // Notes CRUD
   Future<List<NoteModel>> getNotes(String customerId) async {
-    try {
-      final snapshot = await _firestore
-          .collection('customers')
-          .doc(customerId)
-          .collection('notes')
-          .orderBy('createdAt', descending: true)
-          .get();
+    final snap = await _firestore
+        .collection('customers')
+        .doc(customerId)
+        .collection('notes')
+        .orderBy('createdAt', descending: true)
+        .get();
 
-      return snapshot.docs.map((doc) => NoteModel.fromMap(doc.data())).toList();
-    } catch (e) {
-      debugPrint('Get notes error: $e');
-      return [];
-    }
+    return snap.docs.map((d) => NoteModel.fromMap(d.data(), d.id)).toList();
   }
 
-  Future<void> addNote(String customerId, String content) async {
-    try {
-      final noteRef = _firestore
-          .collection('customers')
-          .doc(customerId)
-          .collection('notes')
-          .doc();
+  Future<void> addNote(String customerId, String text) async {
+    final ref = _firestore
+        .collection('customers')
+        .doc(customerId)
+        .collection('notes')
+        .doc();
+    await ref.set({
+      'id': ref.id,
+      'text': text,
+      'createdAt': Timestamp.now(),
+    });
+  }
 
-      final note = NoteModel(
-        id: noteRef.id,
-        content: content,
-        createdAt: Timestamp.now(),
-      );
-
-      await noteRef.set(note.toMap());
-    } catch (e) {
-      debugPrint('Add note error: $e');
-      rethrow;
-    }
+  Future<void> updateNote(String customerId, NoteModel note) async {
+    await _firestore
+        .collection('customers')
+        .doc(customerId)
+        .collection('notes')
+        .doc(note.id)
+        .update(note.toMap());
   }
 
   Future<void> deleteNote(String customerId, String noteId) async {
-    try {
-      await _firestore
-          .collection('customers')
-          .doc(customerId)
-          .collection('notes')
-          .doc(noteId)
-          .delete();
-    } catch (e) {
-      debugPrint('Delete note error: $e');
-      rethrow;
-    }
+    await _firestore
+        .collection('customers')
+        .doc(customerId)
+        .collection('notes')
+        .doc(noteId)
+        .delete();
   }
-  Future<void> updateNote(String customerId, NoteModel updatedNote) async {
-    try {
-      await _firestore
-          .collection('customers')
-          .doc(customerId)
-          .collection('notes')
-          .doc(updatedNote.id)
-          .update({'content': updatedNote.content});
-    } catch (e) {
-      debugPrint('Update note error: $e');
-      rethrow;
-    }
-  }
-
 }

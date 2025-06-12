@@ -14,6 +14,9 @@ class CustomerModel {
   final List<String> searchTerms;
   final Timestamp createdAt;
 
+  /// Holds the latest note snippet for display
+  String? latestNoteSnippet;
+
   CustomerModel({
     required this.id,
     required this.firstName,
@@ -27,10 +30,11 @@ class CustomerModel {
     this.licensePhotoUrl,
     required this.searchTerms,
     required this.createdAt,
+    this.latestNoteSnippet,
   });
 
   Map<String, dynamic> toMap() {
-    return {
+    final map = {
       'id': id,
       'firstName': firstName,
       'lastName': lastName,
@@ -44,6 +48,8 @@ class CustomerModel {
       'searchTerms': searchTerms,
       'createdAt': createdAt,
     };
+    // latestNoteSnippet is not stored in Firestore
+    return map;
   }
 
   factory CustomerModel.fromMap(Map<String, dynamic> map) {
@@ -58,7 +64,7 @@ class CustomerModel {
       location: map['location'] as GeoPoint?,
       passportPhotoUrl: map['passportPhotoUrl'] as String?,
       licensePhotoUrl: map['licensePhotoUrl'] as String?,
-      searchTerms: List<String>.from(map['searchTerms'] as List),
+      searchTerms: List<String>.from(map['searchTerms'] as List<dynamic>),
       createdAt: map['createdAt'] as Timestamp,
     );
   }
@@ -76,6 +82,7 @@ class CustomerModel {
     String? licensePhotoUrl,
     List<String>? searchTerms,
     Timestamp? createdAt,
+    String? latestNoteSnippet,
   }) {
     return CustomerModel(
       id: id ?? this.id,
@@ -90,6 +97,7 @@ class CustomerModel {
       licensePhotoUrl: licensePhotoUrl ?? this.licensePhotoUrl,
       searchTerms: searchTerms ?? this.searchTerms,
       createdAt: createdAt ?? this.createdAt,
+      latestNoteSnippet: latestNoteSnippet ?? this.latestNoteSnippet,
     );
   }
 }
