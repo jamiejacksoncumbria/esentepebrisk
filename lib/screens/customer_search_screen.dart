@@ -232,7 +232,7 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
             decoration: InputDecoration(
               labelText: 'Search by name, phone, or email',
               suffixIcon: _isLoading
-                  ? const CircularProgressIndicator(strokeWidth: 2)
+                  ? null
                   : IconButton(icon: const Icon(EvaIcons.search), onPressed: () => _searchCustomers(_searchController.text.trim())),
             ),
             onChanged: (v) => _searchCustomers(v.trim()),
@@ -259,8 +259,8 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                       _buildImagePreview(c.licensePhotoUrl, 'Driving Licence'),
                     ]),
                     const SizedBox(height: 8),
-                    Text('Surname: ${c.lastName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     Text('Firstname: ${c.firstName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text('Surname: ${c.lastName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 6),
                     Text(c.phone, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 6),
