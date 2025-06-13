@@ -102,13 +102,12 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
     List<Widget> buttons = [
       _buildIconButton(EvaIcons.messageCircle, 'WhatsApp Msg', Colors.green, () => _launchUrl('https://wa.me/${phone.replaceAll(RegExp(r'[^0-9+]'), '')}')),
       _buildIconButton(EvaIcons.phoneCall, 'WhatsApp Call', Colors.green, () => _launchUrl('https://wa.me/${phone.replaceAll(RegExp(r'[^0-9+]'), '')}')),
+
+      if (kIsWeb || Platform.isAndroid || Platform.isIOS)
+        _buildIconButton(EvaIcons.phone, 'Call', Colors.blue, () => _launchUrl('tel:$phone')),
+      if (Platform.isAndroid || Platform.isIOS)
+        _buildIconButton(EvaIcons.emailOutline, 'SMS', Colors.orange, () => _launchUrl('sms:$phone')),
     ];
-    if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
-      buttons.add(_buildIconButton(EvaIcons.phone, 'Call', Colors.blue, () => _launchUrl('tel:$phone')));
-    }
-    if (Platform.isAndroid || Platform.isIOS) {
-      buttons.add(_buildIconButton(EvaIcons.emailOutline, 'SMS', Colors.orange, () => _launchUrl('sms:$phone')));
-    }
     return Wrap(spacing: 8, children: buttons);
   }
 
@@ -119,12 +118,12 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
   Widget _buildTransferButtons() {
     final List<Map<String, dynamic>> items = [
       {
-        'icons': [Icons.flight,Icons.arrow_circle_right, ],
+        'icons': [Icons.flight, Icons.arrow_circle_right],
         'tooltip': 'Airport → Accommodation',
         'route': '/airport_to_accommodation',
       },
       {
-        'icons': [ Icons.home,Icons.flight],
+        'icons': [Icons.home, Icons.flight],
         'tooltip': 'Accommodation → Airport',
         'route': '/airport_to_accommodation',
       },
@@ -160,7 +159,6 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
             message: tooltip,
             child: GestureDetector(
               onTap: () {
-                //Navigator.pop(context);
                 Navigator.pushNamed(context, route);
               },
               child: Container(
@@ -182,6 +180,39 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  void _showImageDialog(String imageUrl, String title) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            Image.network(imageUrl),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePreview(String? url, String label) {
+    if (url == null) return const SizedBox();
+    return GestureDetector(
+      onTap: () => _showImageDialog(url, label),
+      child: Padding(
+        padding: const EdgeInsets.only(right: 8.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(url, width: 60, height: 60, fit: BoxFit.cover),
+        ),
       ),
     );
   }
@@ -223,6 +254,11 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
                   title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      _buildImagePreview(c.passportPhotoUrl, 'Passport'),
+                      _buildImagePreview(c.licensePhotoUrl, 'Driving Licence'),
+                    ]),
+                    const SizedBox(height: 8),
                     Text('Surname: ${c.lastName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     Text('Firstname: ${c.firstName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 6),
@@ -264,10 +300,13 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                       },
                     ),
                   ]),
-                  trailing: IconButton(icon: const Icon(EvaIcons.edit), onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => CustomerFormScreen(customer: c, onSave: () => _searchCustomers(_searchController.text.trim()))),
-                  )),
+                  trailing: IconButton(
+                    icon: const Icon(EvaIcons.edit),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => CustomerFormScreen(customer: c, onSave: () => _searchCustomers(_searchController.text.trim()))),
+                    ),
+                  ),
                   onLongPress: () => _deleteCustomer(c.id),
                 ),
               );
