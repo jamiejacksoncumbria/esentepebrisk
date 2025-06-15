@@ -2,13 +2,14 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 
 import '../models/customer_model.dart';
 import '../repositories/customer_repository.dart';
 import 'customer_form_screen.dart';
-import 'customer_notes_screen.dart';
+import '../note_screen/customer_notes_screen.dart';
 
 final customerRepositoryProvider = Provider((ref) => CustomerRepository());
 
@@ -184,36 +185,31 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
     );
   }
 
-  void _showImageDialog(String imageUrl, String title) {
+  void _showPhotoPreview(String? url,) {
+    if (url == null) return;
+
     showDialog(
       context: context,
-      builder: (_) => Dialog(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            Image.network(imageUrl),
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
-          ],
+      builder: (context) => Dialog(
+        child: PhotoView(
+          imageProvider:  NetworkImage(url) as ImageProvider,
+          minScale: PhotoViewComputedScale.contained,
+          maxScale: PhotoViewComputedScale.covered * 2,
         ),
       ),
     );
   }
-
-  Widget _buildImagePreview(String? url, String label) {
+  Widget _buildImagePreview(String? url) {
     if (url == null) return const SizedBox();
     return GestureDetector(
-      onTap: () => _showImageDialog(url, label),
-      child: Padding(
-        padding: const EdgeInsets.only(right: 8.0),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.network(url, width: 60, height: 60, fit: BoxFit.cover),
+        onTap: () => _showPhotoPreview(url),
+        child: Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.network(url, width: 80, height: 80, fit: BoxFit.cover),
+          ),
         ),
-      ),
     );
   }
 
@@ -222,7 +218,8 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Customer Search'),
-        actions: [IconButton(icon: const Icon(EvaIcons.personOutline), onPressed: () => Navigator.of(context).pushNamed('/profile'))],
+        actions: [IconButton(icon: const Icon(EvaIcons.settings), onPressed: () => Navigator.of(context).pushNamed('/settings_screen'))
+          ,IconButton(icon: const Icon(EvaIcons.personOutline), onPressed: () => Navigator.of(context).pushNamed('/profile'))],
       ),
       body: Column(children: [
         Padding(
@@ -252,11 +249,16 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
+                  contentPadding: const EdgeInsets.all(8),
                   title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
-                      _buildImagePreview(c.passportPhotoUrl, 'Passport'),
-                      _buildImagePreview(c.licensePhotoUrl, 'Driving Licence'),
+                      Text('Passport',style: TextStyle(fontWeight: FontWeight.bold),),
+                      SizedBox(width: 2,),
+                      _buildImagePreview(c.passportPhotoUrl,),
+                      SizedBox(width: 2,),
+                      Text('Licence',style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(width: 2,),
+                      _buildImagePreview(c.licensePhotoUrl,),
                     ]),
                     const SizedBox(height: 8),
                     Text('Firstname: ${c.firstName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),

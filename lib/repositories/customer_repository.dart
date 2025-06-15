@@ -123,4 +123,24 @@ class CustomerRepository {
         .doc(noteId)
         .delete();
   }
+  Future<void> addNoteWithStaff(
+      String customerId,
+      String text,
+      String staffId,
+      String staffName,
+      ) async {
+    final note = {
+      'text': text,
+      'createdAt': Timestamp.now(),
+      'staffId': staffId,
+      'staffName': staffName,
+    };
+
+    await FirebaseFirestore.instance
+        .collection('customers')
+        .doc(customerId)
+        .collection('notes')
+        .add(note);
+  }
+
 }

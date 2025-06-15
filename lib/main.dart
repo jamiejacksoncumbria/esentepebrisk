@@ -1,5 +1,6 @@
 import 'package:Brisk_Auto_Rent_A_Car_And_Garage/print_label_screen/print_ticket_screen.dart';
 import 'package:Brisk_Auto_Rent_A_Car_And_Garage/screens/customer_search_screen.dart';
+import 'package:Brisk_Auto_Rent_A_Car_And_Garage/settings/settings_screen.dart';
 import 'package:Brisk_Auto_Rent_A_Car_And_Garage/transfers_screens/accommodation_to_airport.dart';
 import 'package:Brisk_Auto_Rent_A_Car_And_Garage/transfers_screens/airport_to_accommodation.dart';
 import 'package:Brisk_Auto_Rent_A_Car_And_Garage/transfers_screens/other_transfer.dart';
@@ -99,6 +100,7 @@ class Login extends StatelessWidget {
         '/customer_form': (context) => const CustomerSearchScreen(),
         '/print_label': (context) => const PrintLabelScreen(),
         '/car_video': (context) => const CarVideoScreen(),
+        '/settings_screen': (context) => SettingsScreen(),
 
       },
     );

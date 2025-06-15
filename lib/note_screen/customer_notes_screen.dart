@@ -1,26 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/note_model.dart';
+import '../models/staff_model.dart';
+
+import '../providers/staff_notifer.dart';
 import '../repositories/customer_repository.dart';
 
-class CustomerNotesScreen extends StatefulWidget {
+class CustomerNotesScreen extends ConsumerStatefulWidget {
   final String customerId;
   final VoidCallback? onNotesUpdated;
 
   const CustomerNotesScreen({
-    Key? key,
+    super.key,
     required this.customerId,
-    this.onNotesUpdated, required Future<void> Function() onUpdate,
-  }) : super(key: key);
+    this.onNotesUpdated,
+    required Future<void> Function() onUpdate,
+  });
 
   @override
-  State<CustomerNotesScreen> createState() => _CustomerNotesScreenState();
+  ConsumerState<CustomerNotesScreen> createState() =>
+      _CustomerNotesScreenState();
 }
 
-class _CustomerNotesScreenState extends State<CustomerNotesScreen> {
+class _CustomerNotesScreenState extends ConsumerState<CustomerNotesScreen> {
   final CustomerRepository _repository = CustomerRepository();
-
   final TextEditingController _noteController = TextEditingController();
   List<NoteModel> _notes = [];
+  Staff? _selectedStaff;
   bool _loading = false;
 
   @override
@@ -38,9 +45,7 @@ class _CustomerNotesScreenState extends State<CustomerNotesScreen> {
       setState(() {
         _notes = notes;
       });
-    } catch (e) {
-      // handle error if needed
-    }
+    } catch (_) {}
     setState(() {
       _loading = false;
     });
@@ -48,9 +53,14 @@ class _CustomerNotesScreenState extends State<CustomerNotesScreen> {
 
   Future<void> _addNote() async {
     final text = _noteController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _selectedStaff == null) return;
 
-    await _repository.addNote(widget.customerId, text);
+    await _repository.addNoteWithStaff(
+      widget.customerId,
+      text,
+      _selectedStaff!.id,
+      '${_selectedStaff!.name} ${_selectedStaff!.lastName}',
+    );
     _noteController.clear();
     await _fetchNotes();
     widget.onNotesUpdated?.call();
@@ -69,15 +79,10 @@ class _CustomerNotesScreenState extends State<CustomerNotesScreen> {
           decoration: const InputDecoration(hintText: 'Enter note text'),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, null),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           ElevatedButton(
-            onPressed: () {
-              final newText = controller.text.trim();
-              Navigator.pop(context, newText.isEmpty ? null : newText);
-            },
+            onPressed: () => Navigator.pop(
+                context, controller.text.trim().isEmpty ? null : controller.text.trim()),
             child: const Text('Save'),
           ),
         ],
@@ -99,10 +104,7 @@ class _CustomerNotesScreenState extends State<CustomerNotesScreen> {
         title: const Text('Delete Note'),
         content: const Text('Are you sure you want to delete this note?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Delete'),
@@ -118,33 +120,81 @@ class _CustomerNotesScreenState extends State<CustomerNotesScreen> {
     }
   }
 
+  String formatDateWithOrdinal(DateTime date) {
+    final day = date.day;
+    String suffix;
+    if (day >= 11 && day <= 13) {
+      suffix = 'th';
+    } else {
+      switch (day % 10) {
+        case 1:
+          suffix = 'st';
+          break;
+        case 2:
+          suffix = 'nd';
+          break;
+        case 3:
+          suffix = 'rd';
+          break;
+        default:
+          suffix = 'th';
+      }
+    }
+    final formattedDay = DateFormat('EEEE d').format(date);
+    final formattedRest = DateFormat('MMMM y').format(date);
+    return '$formattedDay$suffix $formattedRest';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final staffAsync = ref.watch(staffListProvider);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Customer Notes'),
-      ),
+      appBar: AppBar(title: const Text('Customer Notes')),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(8),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _noteController,
+                staffAsync.when(
+                  data: (staffList) => DropdownButtonFormField<Staff>(
+                    value: _selectedStaff,
+                    hint: const Text('Select Staff Member'),
+                    isExpanded: true,
+                    items: staffList.map((s) {
+                      return DropdownMenuItem(
+                        value: s,
+                        child: Text('${s.name} ${s.lastName}'),
+                      );
+                    }).toList(),
+                    onChanged: (s) => setState(() => _selectedStaff = s),
                     decoration: const InputDecoration(
-                      labelText: 'Add Note',
                       border: OutlineInputBorder(),
+                      labelText: 'Staff',
                     ),
-                    minLines: 1,
-                    maxLines: 4,
                   ),
+                  loading: () => const CircularProgressIndicator(),
+                  error: (e, _) => Text('Error loading staff: $e'),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _addNote,
-                  child: const Text('Add'),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _noteController,
+                        decoration: const InputDecoration(
+                          labelText: 'Add Note',
+                          border: OutlineInputBorder(),
+                        ),
+                        minLines: 1,
+                        maxLines: 4,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(onPressed: _addNote, child: const Text('Add')),
+                  ],
                 ),
               ],
             ),
@@ -162,7 +212,7 @@ class _CustomerNotesScreenState extends State<CustomerNotesScreen> {
                 return ListTile(
                   title: Text(note.text),
                   subtitle: Text(
-                    note.createdAt.toDate().toLocal().toString(),
+                    '${formatDateWithOrdinal(note.createdAt.toDate().toLocal())} — ${note.staffName}',
                     style: const TextStyle(fontSize: 12),
                   ),
                   trailing: Row(

@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:uuid/uuid.dart';
 import '../models/customer_model.dart';
 import 'customer_search_screen.dart';
 
@@ -71,19 +75,86 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
   }
 
   Future<void> _pickImage(bool isPassport) async {
-    final image = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        if (isPassport) {
-          _passportPhoto = image;
-          _passportPhotoUpdated = true;
-        } else {
-          _licensePhoto = image;
-          _licensePhotoUpdated = true;
+    final picker = ImagePicker();
+
+    Future<void> handlePick(ImageSource source) async {
+      // Only request permissions for mobile platforms
+      if (Platform.isAndroid || Platform.isIOS) {
+        final permission = source == ImageSource.camera
+            ? Permission.camera
+            : (Platform.isIOS ? Permission.photos : Permission.storage);
+
+        final status = await permission.request();
+        if (!status.isGranted) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${permission.toString().split('.').last} permission denied')),
+            );
+          }
+          return;
         }
-      });
+      }
+
+      final picked = await picker.pickImage(source: source);
+      if (picked != null) {
+        final compressed = await compressImage(picked);
+        if (compressed != null) {
+          final compressedXFile = XFile(compressed.path);
+          setState(() {
+            if (isPassport) {
+              _passportPhoto = compressedXFile;
+              _passportPhotoUpdated = true;
+            } else {
+              _licensePhoto = compressedXFile;
+              _licensePhotoUpdated = true;
+            }
+          });
+        }
+      }
     }
+
+    // Handle Desktop: just open gallery, no modal or permissions
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      await handlePick(ImageSource.gallery);
+      return;
+    }
+
+    // Handle Mobile: show modal to choose source
+    final hasCamera = await Permission.camera.isGranted ||
+        (await Permission.camera.request()).isGranted;
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Select from Gallery'),
+              onTap: () async {
+                Navigator.pop(context);
+                await handlePick(ImageSource.gallery);
+              },
+            ),
+            if (hasCamera)
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await handlePick(ImageSource.camera);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
   }
+
+
 
   void _showPhotoPreview(String? url, XFile? file) {
     if (url == null && file == null) return;
@@ -107,10 +178,10 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     final hasPhoto = url != null || currentPhoto != null;
 
     return GestureDetector(
-      onTap: () => hasPhoto
+      onLongPress: () => hasPhoto
           ? _showPhotoPreview(url, currentPhoto)
           : _pickImage(isPassport),
-      onLongPress: () => _pickImage(isPassport),
+      onTap: () => _pickImage(isPassport),
       child: Container(
         height: 120,
         width: 120,
@@ -482,5 +553,17 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
         ),
       ),
     );
+  }
+  Future<XFile?> compressImage(XFile file) async {
+    final dir = await getTemporaryDirectory();
+    final targetPath = '${dir.path}/${const Uuid().v4()}.jpg';
+
+    final result = await FlutterImageCompress.compressAndGetFile(
+      file.path,
+      targetPath,
+      quality: 70, // 70% is a good balance between size and quality
+    );
+
+    return result;
   }
 }
