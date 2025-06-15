@@ -1,3 +1,5 @@
+// lib/screens/customer_search_screen.dart
+
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -51,18 +53,16 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
       _lastSearchTerm = term;
     });
     try {
-      final results = await ref
-          .read(customerRepositoryProvider)
-          .searchCustomers(term);
+      final results =
+      await ref.read(customerRepositoryProvider).searchCustomers(term);
       setState(() {
         _searchResults = results;
         _showForm = results.isEmpty;
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Search failed: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Search failed: $e')));
       }
     } finally {
       setState(() => _isLoading = false);
@@ -72,18 +72,19 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
   Future<void> _deleteCustomer(String id) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) =>
-          AlertDialog(
-            title: const Text('Confirm Delete'),
-            content: const Text('Delete this customer and all their photos?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel')),
-              TextButton(onPressed: () => Navigator.pop(context, true),
-                  child: const Text(
-                      'Delete', style: TextStyle(color: Colors.red))),
-            ],
-          ),
+      builder: (_) => AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: const Text('Delete this customer and all their photos?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child:
+              const Text('Delete', style: TextStyle(color: Colors.red))),
+        ],
+      ),
     );
     if (confirmed == true) {
       setState(() => _isLoading = true);
@@ -92,9 +93,8 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
         _searchCustomers(_searchController.text.trim());
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Delete failed: $e')),
-          );
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Delete failed: $e')));
         }
       } finally {
         setState(() => _isLoading = false);
@@ -104,46 +104,48 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      debugPrint('Could not launch $uri');
+    }
   }
 
-  Widget _buildIconButton(IconData icon, String tooltip, Color bg,
-      VoidCallback onTap) {
-    return CircleAvatar(
-      backgroundColor: bg,
-      child: IconButton(icon: Icon(icon, color: Colors.white, size: 20),
+  Widget _buildIconButton(
+      IconData icon, String tooltip, Color bg, VoidCallback onTap) =>
+      CircleAvatar(
+        backgroundColor: bg,
+        child: IconButton(
+          icon: Icon(icon, color: Colors.white, size: 20),
           tooltip: tooltip,
-          onPressed: onTap),
-    );
-  }
+          onPressed: onTap,
+        ),
+      );
 
   Widget _buildPhoneActions(String phone) {
     final cleaned = phone.replaceAll(RegExp(r'[^0-9+]'), '');
     return Wrap(
       spacing: 8,
       children: [
-        _buildIconButton(
-            EvaIcons.messageCircle, 'WhatsApp Msg', Colors.green, () =>
-            _launchUrl('https://wa.me/$cleaned')),
-        _buildIconButton(
-            EvaIcons.phoneCall, 'WhatsApp Call', Colors.green, () =>
-            _launchUrl('https://wa.me/$cleaned')),
+        _buildIconButton(EvaIcons.messageCircle, 'WhatsApp Msg', Colors.green,
+                () => _launchUrl('https://wa.me/$cleaned')),
+        _buildIconButton(EvaIcons.phoneCall, 'WhatsApp Call', Colors.green,
+                () => _launchUrl('https://wa.me/$cleaned')),
         if (kIsWeb || Platform.isAndroid || Platform.isIOS)
-          _buildIconButton(EvaIcons.phone, 'Call', Colors.blue, () =>
-              _launchUrl('tel:$phone')),
+          _buildIconButton(
+              EvaIcons.phone, 'Call', Colors.blue, () => _launchUrl('tel:$phone')),
         if (Platform.isAndroid || Platform.isIOS)
-          _buildIconButton(EvaIcons.emailOutline, 'SMS', Colors.orange, () =>
-              _launchUrl('sms:$phone')),
+          _buildIconButton(EvaIcons.emailOutline, 'SMS', Colors.orange,
+                  () => _launchUrl('sms:$phone')),
       ],
     );
   }
 
-  Widget _buildEmailButton(String email) {
-    return IconButton(
-        icon: const Icon(EvaIcons.email, color: Colors.deepOrange),
-        tooltip: 'Email',
-        onPressed: () => _launchUrl('mailto:$email'));
-  }
+  Widget _buildEmailButton(String email) => IconButton(
+    icon: const Icon(EvaIcons.email, color: Colors.deepOrange),
+    tooltip: 'Email',
+    onPressed: () => _launchUrl('mailto:$email'),
+  );
 
   Widget _buildTransferButtons() {
     final items = [
@@ -184,8 +186,7 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
           return Tooltip(
             message: item['tooltip']! as String,
             child: GestureDetector(
-              onTap: () =>
-                  Navigator.pushNamed(context, item['route']! as String),
+              onTap: () => Navigator.pushNamed(context, item['route']! as String),
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -194,11 +195,12 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: (item['icons']! as List).map<Widget>((icon) =>
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: Icon(icon as IconData, color: Colors.indigo),
-                      )).toList(),
+                  children: (item['icons']! as List)
+                      .map<Widget>((icon) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Icon(icon as IconData, color: Colors.indigo),
+                  ))
+                      .toList(),
                 ),
               ),
             ),
@@ -212,14 +214,13 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
     if (url == null) return;
     showDialog(
       context: context,
-      builder: (_) =>
-          Dialog(
-            child: PhotoView(
-              imageProvider: NetworkImage(url) as ImageProvider,
-              minScale: PhotoViewComputedScale.contained,
-              maxScale: PhotoViewComputedScale.covered * 2,
-            ),
-          ),
+      builder: (_) => Dialog(
+        child: PhotoView(
+          imageProvider: NetworkImage(url) as ImageProvider,
+          minScale: PhotoViewComputedScale.contained,
+          maxScale: PhotoViewComputedScale.covered * 2,
+        ),
+      ),
     );
   }
 
@@ -243,10 +244,12 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
       appBar: AppBar(
         title: const Text('Customer Search'),
         actions: [
-          IconButton(icon: const Icon(EvaIcons.settings),
+          IconButton(
+              icon: const Icon(EvaIcons.settings),
               onPressed: () =>
                   Navigator.of(context).pushNamed('/settings_screen')),
-          IconButton(icon: const Icon(EvaIcons.personOutline),
+          IconButton(
+              icon: const Icon(EvaIcons.personOutline),
               onPressed: () => Navigator.of(context).pushNamed('/profile')),
         ],
       ),
@@ -260,9 +263,11 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                 labelText: 'Search by name, phone, or email',
                 suffixIcon: _isLoading
                     ? null
-                    : IconButton(icon: const Icon(EvaIcons.search),
-                    onPressed: () =>
-                        _searchCustomers(_searchController.text.trim())),
+                    : IconButton(
+                  icon: const Icon(EvaIcons.search),
+                  onPressed: () =>
+                      _searchCustomers(_searchController.text.trim()),
+                ),
               ),
               onChanged: (v) => _searchCustomers(v.trim()),
             ),
@@ -272,7 +277,8 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : _showForm
                 ? CustomerFormScreen(
-                onSave: () => _searchCustomers(_searchController.text.trim()))
+                onSave: () =>
+                    _searchCustomers(_searchController.text.trim()))
                 : _searchResults.isEmpty
                 ? const Center(child: Text('No customers found.'))
                 : ListView.builder(
@@ -285,88 +291,147 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(8),
                     title: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                      CrossAxisAlignment.start,
                       children: [
-                        if ((c.passportPhotoUrl?.isNotEmpty ?? false) ||
-                            (c.licensePhotoUrl?.isNotEmpty ?? false))
+                        // Photos row
+                        if ((c.passportPhotoUrl?.isNotEmpty ??
+                            false) ||
+                            (c.licensePhotoUrl?.isNotEmpty ??
+                                false))
                           Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 8),
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
                               child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
+                                crossAxisAlignment:
+                                CrossAxisAlignment.center,
                                 children: [
-                                  if (c.passportPhotoUrl?.isNotEmpty ?? false) ...[
-                                    const Text(
-                                      'Passport',
-                                      style: TextStyle(fontWeight: FontWeight.bold),
-                                    ),
+                                  if (c.passportPhotoUrl
+                                      ?.isNotEmpty ??
+                                      false) ...[
+                                    const Text('Passport',
+                                        style: TextStyle(
+                                            fontWeight:
+                                            FontWeight.bold)),
                                     const SizedBox(width: 4),
-                                    _buildImagePreview(c.passportPhotoUrl),
+                                    _buildImagePreview(
+                                        c.passportPhotoUrl),
                                     const SizedBox(width: 12),
                                   ],
-                                  if (c.licensePhotoUrl?.isNotEmpty ?? false) ...[
-                                    const Text(
-                                      'Licence',
-                                      style: TextStyle(fontWeight: FontWeight.bold),
-                                    ),
+                                  if (c.licensePhotoUrl
+                                      ?.isNotEmpty ??
+                                      false) ...[
+                                    const Text('Licence',
+                                        style: TextStyle(
+                                            fontWeight:
+                                            FontWeight.bold)),
                                     const SizedBox(width: 4),
-                                    _buildImagePreview(c.licensePhotoUrl),
+                                    _buildImagePreview(
+                                        c.licensePhotoUrl),
                                   ],
                                 ],
                               ),
                             ),
-                          )
-                        else
-                          const SizedBox.shrink(),
+                          ),
                         const SizedBox(height: 8),
-                        // Name + address
+
+                        // Name
                         Text('Firstname: ${c.firstName}',
                             style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16)),
-                        Text('Surname: ${c.lastName}', style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
-                        if (c.address != null && c.address!.isNotEmpty) ...[
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16)),
+                        Text('Surname: ${c.lastName}',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16)),
+
+                        // Address
+                        if (c.address != null &&
+                            c.address!.isNotEmpty) ...[
                           const SizedBox(height: 6),
-                          Text('Address: ${c.address}', style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text('Address: ${c.address}',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16)),
                         ],
+
+                        // Lat / Lng with navigation button
+                        if (c.location != null) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Lat: ${c.location!.latitude.toStringAsFixed(6)}, '
+                                      'Lng: ${c.location!.longitude.toStringAsFixed(6)}',
+                                  style: const TextStyle(
+                                      fontSize: 14),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                    EvaIcons.navigation2),
+                                tooltip: 'Open in Google Maps',
+                                onPressed: () =>
+                                    _launchUrl(
+                                        'https://www.google.com/maps/search/?api=1&query=${c.location!.latitude},${c.location!.longitude}'),
+                              ),
+                            ],
+                          ),
+                        ],
+
                         const SizedBox(height: 6),
                         // Phone
-                        Text(c.phone, style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text(c.phone,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16)),
                         const SizedBox(height: 6),
                         _buildPhoneActions(c.phone),
                         if (c.secondaryPhone != null) ...[
                           const SizedBox(height: 6),
                           Text('Secondary: ${c.secondaryPhone}',
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16)),
                           const SizedBox(height: 6),
-                          _buildPhoneActions(c.secondaryPhone!),
+                          _buildPhoneActions(
+                              c.secondaryPhone!),
                         ],
+
+                        // Email
                         if (c.email != null) ...[
                           const SizedBox(height: 6),
                           Row(
                             children: [
                               _buildEmailButton(c.email!),
-                              Text(c.email!, style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                              Text(c.email!,
+                                  style: const TextStyle(
+                                      fontWeight:
+                                      FontWeight.bold,
+                                      fontSize: 16)),
                             ],
                           ),
                         ],
+
                         // Transfers
                         _buildTransferButtons(),
+
                         if (c.latestNoteSnippet != null) ...[
                           const SizedBox(height: 8),
                           Text('Note: ${c.latestNoteSnippet}',
                               style: const TextStyle(
-                                  fontStyle: FontStyle.italic)),
+                                  fontStyle:
+                                  FontStyle.italic)),
                         ],
+
                         const SizedBox(height: 8),
                         ElevatedButton.icon(
-                          icon: const Icon(EvaIcons.editOutline),
+                          icon:
+                          const Icon(EvaIcons.editOutline),
                           label: const Text('View/Add Notes'),
                           onPressed: () async {
                             await Navigator.push(
@@ -377,30 +442,32 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                                       customerId: c.id,
                                       onUpdate: () =>
                                           _searchCustomers(
-                                              _lastSearchTerm ?? ''),
+                                              _lastSearchTerm ??
+                                                  ''),
                                     ),
                               ),
                             );
-                            _searchCustomers(_lastSearchTerm ?? '');
+                            _searchCustomers(
+                                _lastSearchTerm ?? '');
                           },
                         ),
                       ],
                     ),
                     trailing: IconButton(
                       icon: const Icon(EvaIcons.edit),
-                      onPressed: () =>
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  CustomerFormScreen(
-                                    customer: c,
-                                    onSave: () =>
-                                        _searchCustomers(
-                                            _searchController.text.trim()),
-                                  ),
-                            ),
-                          ),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              CustomerFormScreen(
+                                customer: c,
+                                onSave: () =>
+                                    _searchCustomers(_searchController
+                                        .text
+                                        .trim()),
+                              ),
+                        ),
+                      ),
                     ),
                     onLongPress: () => _deleteCustomer(c.id),
                   ),
