@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CarVideoScreen extends StatelessWidget {
+  static const routeName = '/car_video';  // ← add this
   const CarVideoScreen({super.key});
 
   @override

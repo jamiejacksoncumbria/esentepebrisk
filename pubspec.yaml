@@ -33,6 +33,11 @@ dependencies:
   http: ^1.2.0
   firebase_dynamic_links: ^6.1.7
   recase: ^4.1.0
+  url_strategy: ^0.2.0
+  shared_preferences: ^2.1.1
+  printing: ^5.11.0
+  pdf: ^3.11.0
+  blue_thermal_printer: ^1.1.5
 
 
 dev_dependencies:

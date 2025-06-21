@@ -4,6 +4,8 @@ import '../models/staff_model.dart';
 import '../providers/staff_notifer.dart';
 
 class StaffScreen extends ConsumerWidget {
+  static const routeName = '/staff';  // ← add this
+
   const StaffScreen({super.key});
 
   void _showForm(BuildContext context, WidgetRef ref, [Staff? staff]) {
