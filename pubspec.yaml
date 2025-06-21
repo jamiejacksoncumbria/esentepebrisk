@@ -38,6 +38,8 @@ dependencies:
   printing: ^5.11.0
   pdf: ^3.11.0
   blue_thermal_printer: ^1.1.5
+  flutter_native_splash: ^2.2.18
+  flutter_launcher_icons: ^0.10.0
 
 
 dev_dependencies:
@@ -51,3 +53,18 @@ fonts:
   - family: SocialIcons
     fonts:
       - asset: packages/firebase_ui_auth/fonts/SocialIcons.ttf
+assets:
+  - assets/logo.png
+
+flutter_native_splash:
+  color: "#000000"          # background color
+  image: assets/logo.png  # your image
+  android: true
+  ios: true
+  android_gravity: center
+  ios_content_mode: center
+
+flutter_icons:
+  android: true           # generate for Android
+  ios: true               # generate for iOS
+  image_path: "assets/icon/logo.png"
