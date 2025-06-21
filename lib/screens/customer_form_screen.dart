@@ -1,6 +1,8 @@
 // lib/screens/customer_form_screen.dart
 
+import 'dart:async';
 import 'dart:io' show File, Platform;
+import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -15,6 +17,7 @@ import 'package:recase/recase.dart';
 import 'package:uuid/uuid.dart';
 import 'package:image_compression/image_compression.dart'; // ^1.0.5
 import 'package:url_launcher/url_launcher.dart';
+
 
 import '../models/customer_model.dart';
 import 'customer_search_screen.dart';
@@ -105,6 +108,127 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
   void _markDirty() {
     if (!_hasUnsavedChanges) setState(() => _hasUnsavedChanges = true);
   }
+
+
+  Future<void> _convertUrl() async {
+    final text = _urlController.text.trim();
+    debugPrint('▶️ _convertUrl() called with: $text');
+
+    if (text.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a Google Maps URL')),
+        );
+      }
+      return;
+    }
+
+    Map<String, double>? coords;
+
+    try {
+      // 1) Built-in extractor
+      debugPrint('…trying GoogleMapsUrlExtractor.processGoogleMapsUrl');
+      coords = await GoogleMapsUrlExtractor.processGoogleMapsUrl(text);
+      debugPrint('…built-in extractor returned: $coords');
+
+      // 2) Fallback for share links
+      if (coords == null && (text.contains('goo.gl') || text.contains('maps.app.goo.gl'))) {
+        debugPrint('…built-in failed, attempting HTTP HEAD to catch redirects');
+        final client = http.Client();
+
+        final headReq = http.Request('HEAD', Uri.parse(text))
+          ..headers['User-Agent'] = 'Mozilla/5.0'
+          ..followRedirects = false;
+        final headRes = await client.send(headReq);
+        debugPrint('…HEAD status: ${headRes.statusCode}');
+        final loc = headRes.headers['location'];
+        debugPrint('…HEAD redirect location: $loc');
+
+        if (loc != null) {
+          // 2a) Try package extractor
+          coords = GoogleMapsUrlExtractor.extractCoordinates(loc);
+          debugPrint('…coords from HEAD redirect via extractor: $coords');
+
+          // 2b) Manual regex fallback
+          if (coords == null) {
+            final m = RegExp(r'/search/(-?\d+\.\d+),\+?(-?\d+\.\d+)')
+                .firstMatch(loc);
+            if (m != null) {
+              final lat = double.tryParse(m.group(1)!);
+              final lng = double.tryParse(m.group(2)!);
+              if (lat != null && lng != null) {
+                coords = {'latitude': lat, 'longitude': lng};
+                debugPrint('…manual /search regex coords: $coords');
+              } else {
+                debugPrint('…regex parsed but parseDouble failed');
+              }
+            } else {
+              debugPrint('…manual regex did not match');
+            }
+          }
+        }
+
+        client.close();
+      }
+
+      // 3) Apply coords, show success, or show error
+      if (coords != null) {
+        final lat = coords['latitude']!;
+        final lng = coords['longitude']!;
+        debugPrint('✅ extracted coords: $lat, $lng');
+
+        if (mounted) {
+          setState(() {
+            _latController.text = lat.toStringAsFixed(6);
+            _lngController.text = lng.toStringAsFixed(6);
+            _currentPosition = Position(
+              latitude: lat,
+              longitude: lng,
+              timestamp: DateTime.now(),
+              accuracy: 0,
+              altitude: 0,
+              heading: 0,
+              speed: 0,
+              altitudeAccuracy: 0,
+              headingAccuracy: 0,
+              speedAccuracy: 0,
+            );
+          });
+          _markDirty();
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Coordinates extracted successfully! Don’t forget to save the customer.',
+              ),
+            ),
+          );
+        }
+      } else {
+        debugPrint('❌ unable to extract coordinates after all attempts');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Unable to extract coordinates')),
+          );
+        }
+      }
+    } catch (e, st) {
+      debugPrint('⚠️ error in _convertUrl(): $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+
+
+
+
+
+
+
 
   Future<bool> _showDiscardDialog() async {
     final discard = await showDialog<bool>(
@@ -317,47 +441,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     }
   }
 
-  Future<void> _convertUrl() async {
-    final text = _urlController.text.trim();
-    if (text.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a Google Maps URL')),
-        );
-      }
-      return;
-    }
-    try {
-      final coords = await GoogleMapsUrlExtractor.processGoogleMapsUrl(text);
-      if (coords != null && mounted) {
-        setState(() {
-          _latController.text = coords['latitude']!.toStringAsFixed(6);
-          _lngController.text = coords['longitude']!.toStringAsFixed(6);
-          _currentPosition = Position(
-            latitude: coords['latitude']!,
-            longitude: coords['longitude']!,
-            timestamp: DateTime.now(),
-            accuracy: 0, altitude: 0,
-            heading: 0, speed: 0,
-            altitudeAccuracy: 0,
-            headingAccuracy: 0,
-            speedAccuracy: 0,
-          );
-        });
-        _markDirty();
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to extract coordinates')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error extracting coordinates: $e')),
-        );
-      }
-    }
-  }
+
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
