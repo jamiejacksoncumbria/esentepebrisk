@@ -1,5 +1,7 @@
 // lib/main.dart
 
+import 'package:Brisk_Auto_Rent_A_Car_And_Garage/settings/child_seat_screen.dart';
+import 'package:Brisk_Auto_Rent_A_Car_And_Garage/settings/driver_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -109,11 +111,16 @@ class App extends StatelessWidget {
         '/accommodation_to_airport': (_) =>
         const AccommodationToAirportScreen(),
         CustomerSearchScreen.routeName: (_) => const CustomerSearchScreen(),
-        CarVideoScreen.routeName: (_) => const CarVideoScreen(),
         SettingsScreen.routeName: (_) => const SettingsScreen(),
+        ChildSeatScreen.routeName: (_) => const ChildSeatScreen(),
         AirportScreen.routeName: (_) => const AirportScreen(),
         StaffScreen.routeName: (_) => const StaffScreen(),
+        DriverScreen.routeName: (_) => const DriverScreen(),
         CarScreen.routeName: (_) => const CarScreen(),
+        CarVideoScreen.routeName: (ctx) {
+          final custId = ModalRoute.of(ctx)!.settings.arguments as String;
+          return CarVideoScreen(customerId: custId);
+        },
         // **NOTE**: we no longer put '/print_label' here
       },
 

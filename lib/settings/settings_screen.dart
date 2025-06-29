@@ -1,8 +1,11 @@
 // lib/settings/settings_screen.dart
+import 'package:Brisk_Auto_Rent_A_Car_And_Garage/settings/driver_screen.dart';
 import 'package:flutter/material.dart';
 
+import 'child_seat_screen.dart';
+
 class SettingsScreen extends StatelessWidget {
-  static const routeName = '/settings';
+  static const routeName = '/settings_screen';  // ← add here
   const SettingsScreen({super.key});
 
   @override
@@ -18,7 +21,7 @@ class SettingsScreen extends StatelessWidget {
           children: [
             ElevatedButton.icon(
               icon: const Icon(Icons.flight_takeoff),
-              label: const Text('Add Airports'),
+              label: const Text('Add / Edit Airports'),
               onPressed: () {
                 Navigator.pushNamed(context, '/airport');
               },
@@ -29,7 +32,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton.icon(
               icon: const Icon(Icons.person_add),
-              label: const Text('Add Staff'),
+              label: const Text('Add / Edit Staff'),
               onPressed: () {
                 Navigator.pushNamed(context, '/staff');
               },
@@ -40,7 +43,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton.icon(
               icon: const Icon(Icons.directions_car),
-              label: const Text('Add Cars'),
+              label: const Text('Add / Edit Cars'),
               onPressed: () {
                 Navigator.pushNamed(context, '/car');
               },
@@ -48,6 +51,29 @@ class SettingsScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
             ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.event_seat),
+              label: const Text('Add / Edit Child Seat'),
+              onPressed: () {
+                Navigator.pushNamed(context, ChildSeatScreen.routeName);
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.drive_eta),
+              label: const Text('Add / Edit Drivers'),
+              onPressed: () {
+                Navigator.pushNamed(context, DriverScreen.routeName);
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),

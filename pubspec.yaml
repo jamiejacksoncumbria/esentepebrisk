@@ -40,6 +40,10 @@ dependencies:
   blue_thermal_printer: ^1.1.5
   flutter_native_splash: ^2.2.18
   flutter_launcher_icons: ^0.14.4
+  video_player:     ^2.8.1
+  file_picker: ^10.2.0
+  cached_network_image: ^3.2.3
+  flutter_cache_manager: ^3.3.0
 
 
 dev_dependencies:

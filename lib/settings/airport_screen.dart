@@ -1,3 +1,5 @@
+// lib/screens/airport_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/airport_model.dart';
@@ -16,6 +18,7 @@ class AirportScreenState extends ConsumerState<AirportScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _codeCtrl = TextEditingController();
+  final _costCtrl = TextEditingController(); // ← new
 
   Airport? _editing;
 
@@ -23,6 +26,7 @@ class AirportScreenState extends ConsumerState<AirportScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _codeCtrl.dispose();
+    _costCtrl.dispose(); // ← new
     super.dispose();
   }
 
@@ -31,6 +35,7 @@ class AirportScreenState extends ConsumerState<AirportScreen> {
       _editing = airport;
       _nameCtrl.text = airport.name;
       _codeCtrl.text = airport.code;
+      _costCtrl.text = airport.cost.toString(); // ← new
     });
   }
 
@@ -39,6 +44,7 @@ class AirportScreenState extends ConsumerState<AirportScreen> {
       _editing = null;
       _nameCtrl.clear();
       _codeCtrl.clear();
+      _costCtrl.clear(); // ← new
     });
   }
 
@@ -46,16 +52,17 @@ class AirportScreenState extends ConsumerState<AirportScreen> {
     if (!_formKey.currentState!.validate()) return;
     final name = _nameCtrl.text.trim();
     final code = _codeCtrl.text.trim();
+    final cost = double.parse(_costCtrl.text.trim()); // ← new
     final notifier = ref.read(airportNotifierProvider.notifier);
 
     try {
       if (_editing == null) {
-        await notifier.addAirport(name, code);
+        await notifier.addAirport(name, code, cost); // ← updated
         if (!mounted) return;
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Airport added')));
       } else {
-        await notifier.updateAirport(_editing!.id, name, code);
+        await notifier.updateAirport(_editing!.id, name, code, cost); // ← updated
         if (!mounted) return;
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Airport updated')));
@@ -63,6 +70,7 @@ class AirportScreenState extends ConsumerState<AirportScreen> {
       }
       _nameCtrl.clear();
       _codeCtrl.clear();
+      _costCtrl.clear(); // ← new
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
@@ -127,7 +135,7 @@ class AirportScreenState extends ConsumerState<AirportScreen> {
                         final airport = list[i];
                         return ListTile(
                           title: Text(airport.name),
-                          subtitle: Text(airport.code),
+                          subtitle: Text('${airport.code} — £${airport.cost.toStringAsFixed(2)}'),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -161,17 +169,26 @@ class AirportScreenState extends ConsumerState<AirportScreen> {
                     children: [
                       TextFormField(
                         controller: _nameCtrl,
-                        decoration:
-                        const InputDecoration(labelText: 'Airport Name'),
+                        decoration: const InputDecoration(labelText: 'Airport Name'),
                         validator: (v) =>
                         (v == null || v.isEmpty) ? 'Enter a name' : null,
                       ),
                       TextFormField(
                         controller: _codeCtrl,
-                        decoration:
-                        const InputDecoration(labelText: 'Airport Code'),
+                        decoration: const InputDecoration(labelText: 'Airport Code'),
                         validator: (v) =>
                         (v == null || v.isEmpty) ? 'Enter a code' : null,
+                      ),
+                      TextFormField(
+                        controller: _costCtrl,
+                        decoration: const InputDecoration(labelText: 'Cost'),
+                        keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Enter cost';
+                          if (double.tryParse(v) == null) return 'Invalid number';
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
                       Row(
@@ -180,9 +197,7 @@ class AirportScreenState extends ConsumerState<AirportScreen> {
                             child: ElevatedButton(
                               onPressed: isBusy ? null : _submit,
                               child: Text(
-                                _editing == null
-                                    ? 'Add Airport'
-                                    : 'Update Airport',
+                                _editing == null ? 'Add Airport' : 'Update Airport',
                               ),
                             ),
                           ),

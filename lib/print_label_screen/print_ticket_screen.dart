@@ -161,9 +161,9 @@ class PrintLabelScreenState extends ConsumerState<PrintLabelScreen> {
 
     final c = widget.customer;
     final startStr = _format(_startDateTime!);
-    final endStr = _format(_endDateTime!);
-    final carDesc = '${_selectedCar!.registration} ${_selectedCar!.make} ${_selectedCar!.model}'.toUpperCase();
-    final note = (c.latestNoteSnippet ?? '').toUpperCase();
+    final endStr   = _format(_endDateTime!);
+    final carDesc  = '${_selectedCar!.registration} ${_selectedCar!.make} ${_selectedCar!.model}'.toUpperCase();
+    final note     = (c.latestNoteSnippet ?? '').toUpperCase();
 
     // Windows / PDF printing
     if (_selectedPrinter!.type == PrinterType.windows &&
@@ -173,13 +173,18 @@ class PrintLabelScreenState extends ConsumerState<PrintLabelScreen> {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text('${c.firstName} ${c.lastName}'.toUpperCase(), style: pw.TextStyle(fontSize: 14)),
-          pw.Text(c.phone.toUpperCase(),                     style: pw.TextStyle(fontSize: 14)),
-          pw.Text((c.email ?? '').toUpperCase(),             style: pw.TextStyle(fontSize: 14)),
-          pw.Text((c.address ?? '').toUpperCase(),           style: pw.TextStyle(fontSize: 14)),
-          pw.Text(startStr,                                  style: pw.TextStyle(fontSize: 14)),
-          pw.Text(endStr,                                    style: pw.TextStyle(fontSize: 14)),
-          pw.Text(carDesc,                                   style: pw.TextStyle(fontSize: 14)),
-          pw.Text('NOTE: $note',                             style: pw.TextStyle(fontSize: 14)),
+          pw.Text(c.phone.toUpperCase(), style: pw.TextStyle(fontSize: 14)),
+          // ← ID & License if present
+          if (c.passportNumber != null && c.passportNumber!.isNotEmpty)
+            pw.Text('I: ${c.passportNumber!}'.toUpperCase(), style: pw.TextStyle(fontSize: 14)),
+          if (c.licenseNumber != null && c.licenseNumber!.isNotEmpty)
+            pw.Text('L: ${c.licenseNumber!}'.toUpperCase(), style: pw.TextStyle(fontSize: 14)),
+          pw.Text((c.email ?? '').toUpperCase(), style: pw.TextStyle(fontSize: 14)),
+          pw.Text((c.address ?? '').toUpperCase(), style: pw.TextStyle(fontSize: 14)),
+          pw.Text(startStr, style: pw.TextStyle(fontSize: 14)),
+          pw.Text(endStr, style: pw.TextStyle(fontSize: 14)),
+          pw.Text(carDesc, style: pw.TextStyle(fontSize: 14)),
+          pw.Text('NOTE: $note', style: pw.TextStyle(fontSize: 14)),
           pw.SizedBox(height: 8),
         ],
       )));
@@ -201,9 +206,14 @@ class PrintLabelScreenState extends ConsumerState<PrintLabelScreen> {
       // GS ! 0x01 → double-width, normal height
       await bt.writeBytes(Uint8List.fromList([0x1D, 0x21, 0x01]));
 
+      // build lines dynamically
       final lines = <String>[
         '${c.firstName} ${c.lastName}'.toUpperCase(),
         c.phone.toUpperCase(),
+        if (c.passportNumber != null && c.passportNumber!.isNotEmpty)
+          'I: ${c.passportNumber!}'.toUpperCase(),
+        if (c.licenseNumber != null && c.licenseNumber!.isNotEmpty)
+          'L: ${c.licenseNumber!}'.toUpperCase(),
         (c.email ?? '').toUpperCase(),
         (c.address ?? '').toUpperCase(),
         startStr,

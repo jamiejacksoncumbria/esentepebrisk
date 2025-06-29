@@ -11,6 +11,11 @@ class CustomerModel {
   final GeoPoint? location;
   String? passportPhotoUrl;
   String? licensePhotoUrl;
+
+  // ← NEW fields:
+  final String? passportNumber;
+  final String? licenseNumber;
+
   final List<String> searchTerms;
   final Timestamp createdAt;
 
@@ -28,6 +33,9 @@ class CustomerModel {
     this.location,
     this.passportPhotoUrl,
     this.licensePhotoUrl,
+    // ← NEW ctor params:
+    this.passportNumber,
+    this.licenseNumber,
     required this.searchTerms,
     required this.createdAt,
     this.latestNoteSnippet,
@@ -45,10 +53,12 @@ class CustomerModel {
       if (location != null) 'location': location,
       if (passportPhotoUrl != null) 'passportPhotoUrl': passportPhotoUrl,
       if (licensePhotoUrl != null) 'licensePhotoUrl': licensePhotoUrl,
+      // ← NEW:
+      if (passportNumber != null) 'passportNumber': passportNumber,
+      if (licenseNumber != null) 'licenseNumber': licenseNumber,
       'searchTerms': searchTerms,
       'createdAt': createdAt,
     };
-    // latestNoteSnippet is not stored in Firestore
     return map;
   }
 
@@ -64,6 +74,9 @@ class CustomerModel {
       location: map['location'] as GeoPoint?,
       passportPhotoUrl: map['passportPhotoUrl'] as String?,
       licensePhotoUrl: map['licensePhotoUrl'] as String?,
+      // ← NEW:
+      passportNumber: map['passportNumber'] as String?,
+      licenseNumber: map['licenseNumber'] as String?,
       searchTerms: List<String>.from(map['searchTerms'] as List<dynamic>),
       createdAt: map['createdAt'] as Timestamp,
     );
@@ -80,6 +93,9 @@ class CustomerModel {
     GeoPoint? location,
     String? passportPhotoUrl,
     String? licensePhotoUrl,
+    // ← NEW:
+    String? passportNumber,
+    String? licenseNumber,
     List<String>? searchTerms,
     Timestamp? createdAt,
     String? latestNoteSnippet,
@@ -95,6 +111,9 @@ class CustomerModel {
       location: location ?? this.location,
       passportPhotoUrl: passportPhotoUrl ?? this.passportPhotoUrl,
       licensePhotoUrl: licensePhotoUrl ?? this.licensePhotoUrl,
+      // ← NEW:
+      passportNumber: passportNumber ?? this.passportNumber,
+      licenseNumber: licenseNumber ?? this.licenseNumber,
       searchTerms: searchTerms ?? this.searchTerms,
       createdAt: createdAt ?? this.createdAt,
       latestNoteSnippet: latestNoteSnippet ?? this.latestNoteSnippet,
