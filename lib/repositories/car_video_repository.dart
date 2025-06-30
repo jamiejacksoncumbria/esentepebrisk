@@ -58,4 +58,19 @@ class CarVideoRepository {
       rethrow;
     }
   }
+  /// ★ NEW ★
+  /// Stream *all* videos whose `timestamp` falls between [start] and [end].
+  Stream<List<CarVideo>> streamBetweenDates(
+      DateTime start, DateTime end) {
+    return _col
+        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(end))
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+        .map((d) => CarVideo.fromDoc(
+        d as DocumentSnapshot<Map<String, dynamic>>))
+        .toList());
+  }
+
 }

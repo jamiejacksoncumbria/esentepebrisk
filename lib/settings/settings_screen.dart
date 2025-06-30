@@ -2,6 +2,7 @@
 import 'package:Brisk_Auto_Rent_A_Car_And_Garage/settings/driver_screen.dart';
 import 'package:flutter/material.dart';
 
+import '../screens/car_videos_by_date_screen.dart';
 import 'child_seat_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -74,6 +75,19 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.videocam),
+              title: const Text('View Car Videos'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CarVideosByDateScreen(),
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
