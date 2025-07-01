@@ -1,4 +1,5 @@
 // lib/models/car_model.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Car {
@@ -29,4 +30,16 @@ class Car {
       registration: data['registration'] as String? ?? '',
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Car && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+
+  @override
+  String toString() => 'Car($registration, $make $model)';
 }
