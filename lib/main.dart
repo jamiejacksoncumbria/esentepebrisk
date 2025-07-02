@@ -23,6 +23,7 @@ import 'transfers_screens/airport_to_accommodation.dart';
 import 'transfers_screens/accommodation_to_airport.dart';
 import 'car_video_screens/car_video_screen.dart';
 import 'print_label_screen/print_ticket_screen.dart';  // contains PrintLabelScreen
+import 'screens/car_videos_by_date_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -116,6 +117,7 @@ class App extends StatelessWidget {
         AirportScreen.routeName: (_) => const AirportScreen(),
         StaffScreen.routeName: (_) => const StaffScreen(),
         DriverScreen.routeName: (_) => const DriverScreen(),
+        CarVideosByDateScreen.routeName: (_) => const CarVideosByDateScreen(),
         CarScreen.routeName: (_) => const CarScreen(),
         CarVideoScreen.routeName: (ctx) {
           final custId = ModalRoute.of(ctx)!.settings.arguments as String;

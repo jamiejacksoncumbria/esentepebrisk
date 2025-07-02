@@ -19,7 +19,7 @@ import '../providers/car_video_provider.dart';
 class CarVideoScreen extends ConsumerStatefulWidget {
   static const routeName = '/car_video';
   final String customerId;
-  const CarVideoScreen({Key? key, required this.customerId}) : super(key: key);
+  const CarVideoScreen({super.key, required this.customerId});
 
   @override
   ConsumerState<CarVideoScreen> createState() => _CarVideoScreenState();
@@ -86,9 +86,7 @@ class _CarVideoScreenState extends ConsumerState<CarVideoScreen> {
 
     // 3) permission
     if (!kIsWeb && !await Permission.camera.request().isGranted) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Camera permission denied')),
-      );
+      messenger.showSnackBar(const SnackBar(content: Text('Camera permission denied')));
       return;
     }
 
@@ -155,9 +153,7 @@ class _CarVideoScreenState extends ConsumerState<CarVideoScreen> {
       );
       await ref.read(carVideoRepoProvider).addVideo(cv);
 
-      if (mounted) {
-        messenger.showSnackBar(const SnackBar(content: Text('Upload complete')));
-      }
+      if (mounted) messenger.showSnackBar(const SnackBar(content: Text('Upload complete')));
     } catch (e, st) {
       if (kDebugMode) debugPrint('[_uploadMedia] error: $e\n$st');
       if (mounted) messenger.showSnackBar(SnackBar(content: Text('Upload error: $e')));
@@ -194,8 +190,10 @@ class _CarVideoScreenState extends ConsumerState<CarVideoScreen> {
       body: videosAsync.when(
         data: (videos) {
           if (videos.isEmpty) return const Center(child: Text('No videos yet.'));
-          return ListView.builder(
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: videos.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (_, i) {
               final cv = videos[i];
               return ListTile(
@@ -207,12 +205,12 @@ class _CarVideoScreenState extends ConsumerState<CarVideoScreen> {
                     width: 50,
                     height: 50,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => const SizedBox(
+                    placeholder: (_, _) => const SizedBox(
                       width: 50,
                       height: 50,
                       child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
                     ),
-                    errorWidget: (_, __, ___) => const Icon(Icons.error, size: 50),
+                    errorWidget: (_, _, _) => const Icon(Icons.error, size: 50),
                   ),
                 )
                     : null,
@@ -235,7 +233,7 @@ class _CarVideoScreenState extends ConsumerState<CarVideoScreen> {
 /// Full-screen video player with play/pause and scrubbing
 class FullScreenVideo extends StatefulWidget {
   final String url;
-  const FullScreenVideo({Key? key, required this.url}) : super(key: key);
+  const FullScreenVideo({super.key, required this.url});
 
   @override
   FullScreenVideoState createState() => FullScreenVideoState();

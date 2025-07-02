@@ -88,6 +88,14 @@ class SettingsScreen extends StatelessWidget {
                 );
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.video_library),
+              title: const Text('Car Videos by Date Range'),
+              onTap: () => Navigator.pushNamed(
+                context,
+                CarVideosByDateScreen.routeName,
+              ),
+            ),
           ],
         ),
       ),
