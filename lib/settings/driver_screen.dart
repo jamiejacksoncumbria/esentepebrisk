@@ -1,10 +1,9 @@
-// lib/screens/driver_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/driver_model.dart';
-import '../models/airport_model.dart';
 import '../providers/driver_notifier.dart';
+import '../models/airport_model.dart';
 import '../providers/airport_notifier.dart';
 
 class DriverScreen extends ConsumerStatefulWidget {
@@ -30,6 +29,18 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
   Map<String, double> _commissionRates = {};
 
   Driver? _editing;
+  Color? _selectedColor; // ← new
+
+  // a simple palette excluding red/green/orange:
+  static const List<Color> _palette = [
+    Colors.blue,
+    Colors.teal,
+    Colors.purple,
+    Colors.brown,
+    Colors.cyan,
+    Colors.indigo,
+    Colors.pink,
+  ];
 
   @override
   void dispose() {
@@ -66,6 +77,9 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
           TextEditingController(text: rate.toString());
     });
 
+    // load the saved color
+    _selectedColor = Color(d.colorValue);
+
     setState(() {});
   }
 
@@ -77,6 +91,7 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
     _phoneCtrl.clear();
     _whatsappCtrl.clear();
     _commissionRates.clear();
+    _selectedColor = null;
 
     for (final ctl in _commissionCtrls.values) {
       ctl.dispose();
@@ -88,6 +103,12 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedColor == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please pick a driver color')),
+      );
+      return;
+    }
 
     final driver = Driver(
       id: _editing?.id ?? '',
@@ -97,6 +118,7 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
       phone: _phoneCtrl.text.trim(),
       whatsapp: _whatsappCtrl.text.trim(),
       commissionRates: _commissionRates,
+      colorValue: _selectedColor!.value, // ← new
     );
     final notifier = ref.read(driverNotifierProvider.notifier);
 
@@ -151,7 +173,7 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(children: [
-          // --- List existing drivers ---
+          // --- Existing drivers ---
           Expanded(
             child: driversAsync.when(
               data: (list) {
@@ -163,6 +185,9 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
                   itemBuilder: (_, i) {
                     final d = list[i];
                     return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Color(d.colorValue), // show color
+                      ),
                       title: Text(d.name),
                       subtitle: Text(d.email),
                       trailing: Row(
@@ -185,11 +210,12 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
 
           const Divider(height: 32),
 
-          // --- Add/Edit form ---
+          // --- Add / Edit form ---
           Form(
             key: _formKey,
             child: SingleChildScrollView(
               child: Column(children: [
+                // UUID, Name, Email, Phone, WhatsApp...
                 TextFormField(
                   controller: _uuidCtrl,
                   decoration: const InputDecoration(labelText: 'UUID'),
@@ -221,10 +247,46 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
                 ),
                 const SizedBox(height: 16),
 
+                // --- Color picker ---
+                const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Choose driver color',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: _palette.map((c) {
+                    final isSelected = _selectedColor?.value == c.value;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedColor = c),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: c,
+                          shape: BoxShape.circle,
+                          border: isSelected
+                              ? Border.all(width: 3, color: Colors.black)
+                              : null,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                if (_selectedColor == null)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Please pick a color',
+                          style: TextStyle(color: Colors.red)),
+                    ),
+                  ),
+                const SizedBox(height: 16),
+
                 // --- Commission rates per airport ---
                 airportsAsync.when(
                   data: (airports) {
-                    // ensure a controller exists for each airport
                     for (final a in airports) {
                       _commissionCtrls.putIfAbsent(
                         a.id,
@@ -233,7 +295,6 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
                         ),
                       );
                     }
-
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: airports.map((a) {
@@ -244,8 +305,8 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
                             decoration: InputDecoration(
                               labelText: 'Rate @ ${a.code}',
                             ),
-                            keyboardType: const TextInputType
-                                .numberWithOptions(decimal: true),
+                            keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
                             validator: (v) {
                               if (v == null || v.isEmpty) return 'Enter rate';
                               if (double.tryParse(v) == null) return 'Invalid';
@@ -259,8 +320,7 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
                       }).toList(),
                     );
                   },
-                  loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+                  loading: () => const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Text('Error loading airports: $e'),
                 ),
 
@@ -268,9 +328,8 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
                 Row(children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: isBusy ? null : _submit,
-                      child: Text(
-                          _editing == null ? 'Add Driver' : 'Update Driver'),
+                      onPressed: (isBusy) ? null : _submit,
+                      child: Text(_editing == null ? 'Add Driver' : 'Update Driver'),
                     ),
                   ),
                   if (_editing != null) ...[

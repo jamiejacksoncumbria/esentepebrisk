@@ -1,138 +1,189 @@
 // lib/models/transfer_model.dart
 
-import 'dart:ffi';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'transfer_type.dart';
 
 /// The possible states of a transfer.
 enum TransferStatus { pending, confirmed, canceled, completed }
 
 class TransferModel {
-  String? collectionUUID;
-  String? customerUUID;
-  Timestamp? collectionDateAndTime;
-  Timestamp? flightDateAndTime;
-  String? pickupLocation;
-  String? dropOffLocation;
-  Bool? airportCollection;
-  String? amountOfPeople;
-  String? cost;
-  String? driverUUID;
-  GeoPoint? pickupLocationGeoPoint;
-  GeoPoint? dropOffLocationGeoPoint;
-  String? notes;
+  final String   collectionUUID;
+  final String   customerUUID;
+  final TransferType type;
+  final Timestamp    collectionDateAndTime;
 
-  /// IDs of selected child‐seat documents
-  List<String>? childSeatIds;
+  // optional flight info
+  final String?  flightNumber;
+  final Timestamp? flightDateAndTime;
 
-  /// Number of adults on this transfer
-  int adults;
+  // pickup/drop-off
+  final String   pickupLocation;
+  final String   dropOffLocation;
+  final bool?    airportCollection;
 
-  /// Number of children on this transfer
-  int children;
+  // snapshot of customer details at booking time
+  final String   customerName;
+  final String   phone1;
+  final String?  phone2;
 
-  /// Current status of the transfer
-  TransferStatus status;
+  // who booked it
+  final String   staffId;
+  final String   staffName;
 
-  TransferModel.airport({
+  // assigned driver info
+  final String   driverUUID;
+  final String   driverName;
+
+  final String   amountOfPeople;
+  final String   cost;
+
+  // optional geodata
+  final GeoPoint? pickupLocationGeoPoint;
+  final GeoPoint? dropOffLocationGeoPoint;
+
+  final String?  notes;
+
+  final List<String>? childSeatIds;
+  final List<String>? childAges;
+
+  final int      adults;
+  final int      children;
+  final TransferStatus status;
+
+  TransferModel({
     required this.collectionUUID,
     required this.customerUUID,
+    required this.type,
     required this.collectionDateAndTime,
-    required this.flightDateAndTime,
-    required this.pickupLocation,
-    required this.dropOffLocation,
-    required this.airportCollection,
-    required this.amountOfPeople,
-    required this.cost,
-    required this.driverUUID,
-    required this.pickupLocationGeoPoint,
-    required this.dropOffLocationGeoPoint,
-    required this.notes,
-    this.childSeatIds,
-    this.adults = 1,
-    this.children = 0,
-    this.status = TransferStatus.pending,
-  });
 
-  TransferModel.noneAirport({
-    required this.collectionUUID,
-    required this.customerUUID,
-    required this.collectionDateAndTime,
-    required this.notes,
+    this.flightNumber,
     this.flightDateAndTime,
+
     required this.pickupLocation,
     required this.dropOffLocation,
-    required this.airportCollection,
+    this.airportCollection,
+
+    required this.customerName,
+    required this.phone1,
+    this.phone2,
+
+    required this.staffId,
+    required this.staffName,
+
+    required this.driverUUID,
+    required this.driverName,
+
     required this.amountOfPeople,
     required this.cost,
-    required this.driverUUID,
+
     this.pickupLocationGeoPoint,
     this.dropOffLocationGeoPoint,
+
+    this.notes,
+
     this.childSeatIds,
+    this.childAges,
+
     this.adults = 1,
     this.children = 0,
     this.status = TransferStatus.pending,
   });
 
   Map<String, dynamic> toMap() {
-    final m = <String, dynamic>{
+    return {
       'collectionUUID': collectionUUID,
-      'customerUUID': customerUUID,
+      'customerUUID':   customerUUID,
+      'type':           type.name,
       'collectionDateAndTime': collectionDateAndTime,
-      'flightDateAndTime': flightDateAndTime,
-      'pickupLocation': pickupLocation,
-      'dropOffLocation': dropOffLocation,
-      'airportCollection': airportCollection,
-      'amountOfPeople': amountOfPeople,
-      'cost': cost,
-      'notes': notes,
-      'driverUUID': driverUUID,
-      'pickupLocationGeoPoint': pickupLocationGeoPoint,
-      'dropOffLocationGeoPoint': dropOffLocationGeoPoint,
 
-      // new fields
-      'adults': adults,
-      'children': children,
-      'status': status.name,
+      if (flightNumber        != null) 'flightNumber':        flightNumber,
+      if (flightDateAndTime   != null) 'flightDateAndTime':   flightDateAndTime,
+
+      'pickupLocation':      pickupLocation,
+      'dropOffLocation':     dropOffLocation,
+      'airportCollection':   airportCollection,
+
+      'customerName':        customerName,
+      'phone1':              phone1,
+      if (phone2             != null) 'phone2':             phone2,
+
+      'staffId':             staffId,
+      'staffName':           staffName,
+
+      'driverUUID':          driverUUID,
+      'driverName':          driverName,
+
+      'amountOfPeople':      amountOfPeople,
+      'cost':                cost,
+
+      if (pickupLocationGeoPoint != null)
+        'pickupLocationGeoPoint': pickupLocationGeoPoint,
+      if (dropOffLocationGeoPoint != null)
+        'dropOffLocationGeoPoint': dropOffLocationGeoPoint,
+
+      if (notes              != null) 'notes':              notes,
+      if (childSeatIds       != null) 'childSeatIds':       childSeatIds,
+      if (childAges          != null) 'childAges':          childAges,
+
+      'adults':              adults,
+      'children':            children,
+      'status':              status.name,
     };
-    if (childSeatIds != null) {
-      m['childSeatIds'] = childSeatIds;
-    }
-    return m;
   }
 
   factory TransferModel.fromMap(Map<String, dynamic> map) {
-    final seats = map['childSeatIds'] != null
-        ? List<String>.from(map['childSeatIds'] as List<dynamic>)
-        : null;
-
-    // parse status string back into enum
-    final statusStr = map['status'] as String? ?? 'pending';
     final status = TransferStatus.values.firstWhere(
-          (e) => e.name == statusStr,
+          (e) => e.name == (map['status'] as String? ?? 'pending'),
       orElse: () => TransferStatus.pending,
     );
 
-    return TransferModel.airport(
-      collectionUUID: map['collectionUUID'] as String?,
-      customerUUID: map['customerUUID'] as String?,
-      collectionDateAndTime: map['collectionDateAndTime'] as Timestamp?,
-      flightDateAndTime: map['flightDateAndTime'] as Timestamp?,
+    final type = TransferType.values.firstWhere(
+          (e) => e.name == (map['type'] as String? ?? 'other'),
+      orElse: () => TransferType.other,
+    );
 
-      pickupLocation: map['pickupLocation'] as String?,
-      dropOffLocation: map['dropOffLocation'] as String?,
-      airportCollection: map['airportCollection'] as Bool?,
-      amountOfPeople: map['amountOfPeople'] as String?,
-      cost: map['cost'] as String?,
-      notes: map['notes'] as String?,
-      driverUUID: map['driverUUID'] as String?,
-      pickupLocationGeoPoint:
-      map['pickupLocationGeoPoint'] as GeoPoint?,
-      dropOffLocationGeoPoint:
-      map['dropOffLocationGeoPoint'] as GeoPoint?,
-      childSeatIds: seats,
-      adults: map['adults'] as int? ?? 1,
-      children: map['children'] as int? ?? 0,
-      status: status,
+    return TransferModel(
+      collectionUUID:       map['collectionUUID'] as String,
+      customerUUID:         map['customerUUID'] as String,
+      type:                 type,
+      collectionDateAndTime: map['collectionDateAndTime'] as Timestamp,
+
+      flightNumber:         map['flightNumber'] as String?,
+      flightDateAndTime:    map['flightDateAndTime'] as Timestamp?,
+
+      pickupLocation:       map['pickupLocation'] as String,
+      dropOffLocation:      map['dropOffLocation'] as String,
+      airportCollection:    map['airportCollection'] as bool?,
+
+      customerName:         map['customerName'] as String? ?? '',
+      phone1:               map['phone1'] as String? ?? '',
+      phone2:               map['phone2'] as String?,
+
+      staffId:              map['staffId'] as String? ?? '',
+      staffName:            map['staffName'] as String? ?? '',
+
+      driverUUID:           map['driverUUID'] as String? ?? '',
+      driverName:           map['driverName'] as String? ?? '',
+
+      amountOfPeople:       map['amountOfPeople'] as String? ?? '',
+      cost:                 map['cost'] as String? ?? '',
+
+      pickupLocationGeoPoint: map['pickupLocationGeoPoint'] as GeoPoint?,
+      dropOffLocationGeoPoint: map['dropOffLocationGeoPoint'] as GeoPoint?,
+
+      notes:                map['notes'] as String?,
+
+      childSeatIds: map['childSeatIds'] != null
+          ? List<String>.from(map['childSeatIds'] as List<dynamic>)
+          : null,
+
+      childAges:   map['childAges'] != null
+          ? List<String>.from(map['childAges'] as List<dynamic>)
+          : null,
+
+      adults:     map['adults'] as int? ?? 1,
+      children:   map['children'] as int? ?? 0,
+      status:     status,
     );
   }
 }

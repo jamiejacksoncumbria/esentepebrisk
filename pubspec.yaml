@@ -11,14 +11,12 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_auth: ^5.5.4
   firebase_ui_auth: ^1.16.1
-  firebase_ui_firestore: ^1.7.1
-  cloud_firestore: ^5.6.8
+  cloud_firestore: ^5.6.11
   firebase_storage: ^12.4.6
   image_picker: ^0.8.6
   geolocator: ^9.0.2
   google_maps_flutter: ^2.2.0
   intl: ^0.20.2
-  firebase_ui_storage: ^2.1.1
   firebase_core: ^3.13.1
   flutter_riverpod: ^2.6.1
   photo_view: ^0.14.0
@@ -30,7 +28,7 @@ dependencies:
   uuid: ^4.5.1
   permission_handler: ^11.3.0
   google_maps_url_extractor: ^1.0.2
-  http: ^1.2.0
+  http: ^0.13.6
   firebase_dynamic_links: ^6.1.7
   recase: ^4.1.0
   url_strategy: ^0.2.0
@@ -44,6 +42,10 @@ dependencies:
   file_picker: ^10.2.0
   cached_network_image: ^3.2.3
   flutter_cache_manager: ^3.3.0
+  timezone: ^0.10.1
+dependency_overrides:
+  http: ^0.13.6
+  web: 1.1.0
 
 
 dev_dependencies:

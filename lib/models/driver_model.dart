@@ -8,6 +8,7 @@ class Driver {
   final String phone;
   final String whatsapp;
   final Map<String,double> commissionRates; // airportId → rate
+  final int colorValue;                     // ← new: ARGB color value
 
   Driver({
     required this.id,
@@ -17,6 +18,7 @@ class Driver {
     required this.phone,
     required this.whatsapp,
     required this.commissionRates,
+    required this.colorValue,                // ← new
   });
 
   Map<String, dynamic> toMap() => {
@@ -26,6 +28,7 @@ class Driver {
     'phone': phone,
     'whatsapp': whatsapp,
     'commissionRates': commissionRates,
+    'colorValue': colorValue,               // ← new
   };
 
   factory Driver.fromDoc(DocumentSnapshot<Map<String,dynamic>> doc) {
@@ -40,6 +43,7 @@ class Driver {
       phone: data['phone'] as String? ?? '',
       whatsapp: data['whatsapp'] as String? ?? '',
       commissionRates: rates,
+      colorValue: data['colorValue'] as int? ?? 0xFF2196F3, // default blue
     );
   }
 
@@ -50,6 +54,7 @@ class Driver {
     String? phone,
     String? whatsapp,
     Map<String,double>? commissionRates,
+    int? colorValue,                         // ← new
   }) =>
       Driver(
         id: id,
@@ -59,5 +64,6 @@ class Driver {
         phone: phone ?? this.phone,
         whatsapp: whatsapp ?? this.whatsapp,
         commissionRates: commissionRates ?? this.commissionRates,
+        colorValue: colorValue ?? this.colorValue,  // ← new
       );
 }
