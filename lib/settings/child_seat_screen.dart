@@ -49,10 +49,12 @@ class _ChildSeatScreenState extends ConsumerState<ChildSeatScreen> {
     try {
       if (_editing == null) {
         await notifier.addChildSeat(type, age);
+        if(!mounted){return;}
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Child seat added')));
       } else {
         await notifier.updateChildSeat(_editing!.id, type, age);
+        if(!mounted){return;}
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Child seat updated')));
         _cancelEdit();
@@ -79,6 +81,7 @@ class _ChildSeatScreenState extends ConsumerState<ChildSeatScreen> {
     );
     if (confirm == true) {
       await ref.read(childSeatNotifierProvider.notifier).deleteChildSeat(seat.id);
+      if(!mounted){return;}
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Deleted')));
     }
@@ -87,7 +90,7 @@ class _ChildSeatScreenState extends ConsumerState<ChildSeatScreen> {
   @override
   Widget build(BuildContext context) {
     final seatsAsync = ref.watch(childSeatsStreamProvider);
-    final isBusy    = ref.watch(childSeatNotifierProvider);
+    final isBusy    = ref.watch(childSeatNotifierProvider).isLoading;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Manage Child Seats')),

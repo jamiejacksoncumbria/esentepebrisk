@@ -1,12 +1,7 @@
-// lib/screens/car_videos_by_date_screen.dart
-
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import 'package:intl/intl.dart';
 
@@ -14,188 +9,192 @@ import '../models/car_video_model.dart';
 import '../providers/car_video_provider.dart';
 
 class CarVideosByDateScreen extends ConsumerStatefulWidget {
-  static const routeName = '/view_car_videos';
-  const CarVideosByDateScreen({super.key});
+  static const routeName = '/car_videos_by_date';
+  const CarVideosByDateScreen({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<CarVideosByDateScreen> createState() =>
-      _CarVideosByDateScreenState();
+  _CarVideosByDateScreenState createState() => _CarVideosByDateScreenState();
 }
 
 class _CarVideosByDateScreenState
     extends ConsumerState<CarVideosByDateScreen> {
-  DateTime? _startDate;
-  DateTime? _endDate;
-  final DateFormat _dateFmt = DateFormat('d MMM yyyy');
-  final DateFormat _tsFmt   = DateFormat('d MMM yyyy h:mma');
+  DateTime? _startDate, _endDate;
+  final _dateFmt = DateFormat('d MMM yyyy');
 
-  Future<void> _pick({required bool isStart}) async {
+  Future<void> _pickDate({required bool isStart}) async {
     final now = DateTime.now();
     final initial = isStart
         ? (_startDate ?? now)
         : (_endDate ?? now);
-    final d = await showDatePicker(
+    final date = await showDatePicker(
       context: context,
       initialDate: initial,
       firstDate: DateTime(2000),
-      lastDate:  DateTime(2100),
+      lastDate: DateTime(2100),
     );
-    if (d == null || !mounted) return;
+    if (date == null || !mounted) return;
     setState(() {
       if (isStart) {
-        // midnight start
-        _startDate = DateTime(d.year, d.month, d.day);
+        _startDate = DateTime(date.year, date.month, date.day);
       } else {
-        // end of day
-        _endDate = DateTime(d.year, d.month, d.day, 23, 59, 59);
+        _endDate = DateTime(date.year, date.month, date.day, 23, 59, 59);
       }
     });
   }
 
-  Future<void> _showImage(String url) async {
-    if (!mounted) return;
+  void _showImage(String url) {
     showDialog(
       context: context,
       builder: (_) => Dialog(
-        child: PhotoView(
-          imageProvider: CachedNetworkImageProvider(url),
-          minScale: PhotoViewComputedScale.contained,
-          maxScale: PhotoViewComputedScale.covered * 2,
-        ),
+        child: PhotoView(imageProvider: CachedNetworkImageProvider(url)),
       ),
     );
   }
 
-  Future<void> _play(String url) async {
-    // On Windows just open in browser/app:
-    if (!kIsWeb && Platform.isWindows) {
-      await launchUrl(Uri.parse(url),
-          mode: LaunchMode.externalApplication);
-      return;
-    }
-
-    final ctrl = VideoPlayerController.networkUrl(Uri.parse(url));
-    try {
-      await ctrl.initialize();
-      if (!mounted) {
-        ctrl.dispose();
-        return;
-      }
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          content: AspectRatio(
-            aspectRatio: ctrl.value.aspectRatio,
-            child: VideoPlayer(ctrl),
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(
-                ctrl.value.isPlaying
-                    ? Icons.pause
-                    : Icons.play_arrow,
-              ),
-              onPressed: () {
-                setState(() {
-                  ctrl.value.isPlaying
-                      ? ctrl.pause()
-                      : ctrl.play();
-                });
-              },
-            ),
-          ],
-        ),
-      ).then((_) => ctrl.dispose());
-    } catch (e) {
-      if (kDebugMode) debugPrint('video init error: $e');
-      ctrl.dispose();
-    }
+  void _openVideo(String url) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => _FullScreenVideo(url: url),
+    ));
   }
 
   @override
-  Widget build(BuildContext c) {
-    final repo = ref.read(carVideoRepoProvider);
-    Stream<List<CarVideo>>? stream;
-    if (_startDate != null && _endDate != null) {
-      stream = repo.streamBetweenDates(_startDate!, _endDate!);
-    }
+  Widget build(BuildContext context) {
+    final range = (_startDate != null && _endDate != null)
+        ? DateRange(start: _startDate!, end: _endDate!)
+        : null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Car Videos by Date')),
+      appBar: AppBar(title: const Text('Car Videos by Date Range')),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(children: [
-              Expanded(
-                child: ListTile(
-                  title: Text(
-                    _startDate == null
-                        ? 'Start Date'
-                        : _dateFmt.format(_startDate!),
-                  ),
-                  onTap: () => _pick(isStart: true),
-                ),
+        child: Column(children: [
+          Row(children: [
+            Expanded(
+              child: ListTile(
+                title: Text(_startDate == null
+                    ? 'Select Start'
+                    : _dateFmt.format(_startDate!)),
+                onTap: () => _pickDate(isStart: true),
               ),
-              Expanded(
-                child: ListTile(
-                  title: Text(
-                    _endDate == null
-                        ? 'End Date'
-                        : _dateFmt.format(_endDate!),
-                  ),
-                  onTap: () => _pick(isStart: false),
-                ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ListTile(
+                title: Text(_endDate == null
+                    ? 'Select End'
+                    : _dateFmt.format(_endDate!)),
+                onTap: () => _pickDate(isStart: false),
               ),
-            ]),
-            const SizedBox(height: 16),
-            if (stream == null)
-              const Text('Please pick both dates to load videos.')
-            else
-              Expanded(
-                child: StreamBuilder<List<CarVideo>>(
-                  stream: stream,
-                  builder: (_, snap) {
-                    if (snap.hasError) {
-                      return Center(child: Text('Error: ${snap.error}'));
-                    }
-                    if (!snap.hasData) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    final list = snap.data!;
-                    if (list.isEmpty) {
-                      return const Center(child: Text('No videos in range.'));
-                    }
-                    return ListView.builder(
-                      itemCount: list.length,
-                      itemBuilder: (_, i) {
-                        final cv = list[i];
-                        return ListTile(
-                          leading: cv.fuelImageUrl != null
-                              ? GestureDetector(
-                            onTap: () => _showImage(cv.fuelImageUrl!),
-                            child: CachedNetworkImage(
-                              imageUrl: cv.fuelImageUrl!,
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                              : null,
-                          title: Text(_tsFmt.format(cv.timestamp)),
-                          subtitle: Text('Car ID: ${cv.carId}'),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.play_arrow),
-                            onPressed: () => _play(cv.videoUrl),
+            ),
+          ]),
+          const SizedBox(height: 16),
+          if (range == null)
+            const Text('Please select both dates'),
+          if (range != null)
+            Expanded(
+              child: ref.watch(carVideosBetweenDatesProvider(range)).when(
+                data: (videos) {
+                  if (videos.isEmpty) {
+                    return const Center(child: Text('No videos found'));
+                  }
+                  return ListView.separated(
+                    separatorBuilder: (_,__) => const Divider(),
+                    itemCount: videos.length,
+                    itemBuilder: (_, i) {
+                      final cv = videos[i];
+                      return ListTile(
+                        leading: cv.fuelImageUrl != null
+                            ? GestureDetector(
+                          onTap: () => _showImage(cv.fuelImageUrl!),
+                          child: CachedNetworkImage(
+                            imageUrl: cv.fuelImageUrl!,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) =>
+                            const CircularProgressIndicator(strokeWidth: 2),
+                            errorWidget: (_, __, ___) =>
+                            const Icon(Icons.error),
                           ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                        )
+                            : null,
+                        title: Text(DateFormat('d MMM yyyy h:mma')
+                            .format(cv.timestamp)),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.play_arrow),
+                          onPressed: () => _openVideo(cv.videoUrl),
+                        ),
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('Error: $e')),
               ),
+            ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// reused full‐screen player
+class _FullScreenVideo extends StatefulWidget {
+  final String url;
+  const _FullScreenVideo({Key? key, required this.url}) : super(key: key);
+
+  @override
+  __FullScreenVideoState createState() => __FullScreenVideoState();
+}
+
+class __FullScreenVideoState extends State<_FullScreenVideo> {
+  late VideoPlayerController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+      ..initialize().then((_) => setState(() {}))
+      ..setLooping(false)
+      ..play();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(backgroundColor: Colors.black),
+      body: Center(
+        child: _ctrl.value.isInitialized
+            ? Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            AspectRatio(
+              aspectRatio: _ctrl.value.aspectRatio,
+              child: VideoPlayer(_ctrl),
+            ),
+            VideoProgressIndicator(_ctrl, allowScrubbing: true),
+            Center(
+              child: IconButton(
+                icon: Icon(
+                  _ctrl.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                  color: Colors.white,
+                  size: 48,
+                ),
+                onPressed: () => setState(() {
+                  _ctrl.value.isPlaying ? _ctrl.pause() : _ctrl.play();
+                }),
+              ),
+            ),
           ],
-        ),
+        )
+            : const CircularProgressIndicator(),
       ),
     );
   }
